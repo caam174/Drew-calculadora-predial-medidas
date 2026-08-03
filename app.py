@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES: BLANCO SOBRE AZUL / NEGRO SOBRE BLANCO (SIN GRISES) ---
+# --- ESTILOS VISUALES: MÁXIMA VISIBILIDAD Y TAMAÑO EXTRA GRANDE ---
 st.markdown("""
     <style>
     /* 1. FONDO PRINCIPAL */
@@ -28,15 +28,15 @@ st.markdown("""
         opacity: 1 !important;
     }
 
-    /* 3. CAPTIONS, NOTAS Y TEXTOS SECUNDARIOS (Blanco grande y legible) */
+    /* 3. CAPTIONS Y TEXTOS SECUNDARIOS */
     [data-testid="stCaptionContainer"], .stCaption, div[data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
-        font-size: 1.05rem !important;
-        font-weight: 500 !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
         opacity: 1 !important;
     }
 
-    /* 4. ENCABEZADOS Y TITULARES (Diferenciados por tamaño y grosor) */
+    /* 4. ENCABEZADOS Y TITULARES */
     h1, h2, h3, h4, .stSubheader {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -44,7 +44,7 @@ st.markdown("""
     }
 
     .title-text {
-        font-size: 2.5rem;
+        font-size: 2.6rem;
         font-weight: 900;
         color: #ffffff !important;
         margin-bottom: 0.3rem;
@@ -56,7 +56,8 @@ st.markdown("""
     div[role="grid"] *,
     input, select, textarea {
         color: #000000 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
     }
 
     div[role="grid"] {
@@ -72,45 +73,51 @@ st.markdown("""
     }
     div[data-testid="stAlert"] p {
         color: #ffffff !important;
-        font-size: 1.05rem !important;
+        font-size: 1.1rem !important;
         font-weight: 600 !important;
     }
 
-    /* 7. TARJETAS DE MÉTRICAS (RESULTADOS) */
+    /* 7. TARJETAS DE CÁLCULO / RESUMEN GEOMÉTRICO (NÚMEROS GIGANTES) */
     div[data-testid="metric-container"] {
         background: rgba(15, 23, 42, 0.95) !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        border: 3px solid #38bdf8 !important;
+        border-radius: 18px;
+        padding: 22px !important;
+        box-shadow: 0 10px 30px rgba(56, 189, 248, 0.3);
+        text-align: center !important;
     }
 
+    /* Etiqueta de la Métrica (Nombre del dato) */
     div[data-testid="stMetricLabel"], div[data-testid="stMetricLabel"] * {
         color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        font-size: 1.4rem !important;
+        margin-bottom: 8px !important;
     }
 
+    /* Valor Numérico (MAXIMIZADO PARA LECTURA RÁPIDA) */
     div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
-        color: #38bdf8 !important; /* Azul neón para resaltar el número */
+        color: #38bdf8 !important; /* Azul neón vibrante */
         font-weight: 900 !important;
-        font-size: 2rem !important;
+        font-size: 3.2rem !important; /* Tamaño Gigante */
+        line-height: 1.1 !important;
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
     }
 
     /* 8. PESTAÑAS (TABS) Y EXPANDER */
     button[data-baseweb="tab"], button[data-baseweb="tab"] * {
         color: #ffffff !important;
-        font-size: 1.1rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        border-bottom: 3px solid #38bdf8 !important;
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        border-bottom: 4px solid #38bdf8 !important;
     }
 
     details summary, details summary * {
         color: #ffffff !important;
-        font-size: 1.1rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
     }
 
@@ -236,7 +243,7 @@ if len(df_coords) >= 3:
     distancias = np.sqrt(dx**2 + dy**2)
     perimetro = np.sum(distancias)
     
-    # --- SECCIÓN 2: RESULTADOS ---
+    # --- SECCIÓN 2: RESULTADOS (GIGANTES) ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
     
