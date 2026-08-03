@@ -330,7 +330,18 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 10. FIRMA DREW CODE Y CONTACTO */
+    /* 10. MARCO CUADRADO ESTILO BLACKBERRY PASSPORT PARA EL MAPA */
+    .passport-frame {
+        max-width: 620px;
+        margin: 0 auto;
+        padding: 8px;
+        background: #0f172a;
+        border: 3px solid #38bdf8;
+        border-radius: 20px;
+        box-shadow: 0 12px 30px rgba(56, 189, 248, 0.3);
+    }
+
+    /* 11. FIRMA DREW CODE Y CONTACTO */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
@@ -531,7 +542,7 @@ if len(df_clean) >= 3:
     
     tab_mapa, tab_kml, tab_dxf = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar KML (Google Earth)", "📐 Exportar DXF (AutoCAD)"])
 
-    # TAB MAPA SATELITAL
+    # TAB MAPA SATELITAL (ENCUADRE SQUARISH / BLACKBERRY PASSPORT 1:1)
     with tab_mapa:
         url_ge = f"https://earth.google.com/web/@{centroide_lat},{centroide_lon},2380a,35d,0y,0h,0t,0r"
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
@@ -575,7 +586,10 @@ if len(df_clean) >= 3:
                 icon=folium.DivIcon(html=f'<div style="font-size: 8.5pt; color: #000; font-weight: bold; background-color: #fde047; padding: 2px 4px; border-radius: 3px; border: 1px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">{distancias[i]:.2f}m</div>')
             ).add_to(m)
             
-        st_folium(m, use_container_width=True, height=450)
+        # ENCUADRE CENTRADO ESTILO BLACKBERRY PASSPORT (CUADRADO 1:1)
+        st.markdown('<div class="passport-frame">', unsafe_allow_html=True)
+        st_folium(m, use_container_width=True, height=580)
+        st.markdown('</div>', unsafe_allow_html=True)
         
     # TAB DESCARGA KML
     with tab_kml:
