@@ -4,7 +4,6 @@ import numpy as np
 from pyproj import Transformer
 import folium
 from streamlit_folium import st_folium
-import matplotlib.pyplot as plt
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
@@ -65,7 +64,7 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO (TARJETAS GIGANTES DE ALTO IMPACTO) */
+    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO (TARJETAS GIGANTES) */
     .metric-box {
         background: linear-gradient(145deg, #1e293b, #0f172a) !important;
         border: 3px solid #38bdf8 !important;
@@ -159,6 +158,68 @@ st.markdown("""
 st.markdown('<div class="title-text">📐 Calculadora Predial UTM</div>', unsafe_allow_html=True)
 st.caption("⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84 Zona 18S)")
 
+# --- FUNCIÓN DIBUJO VECTORIAL SVG DEL PLANO 2D ---
+def generar_svg_plano(x, y, vertices, distancias):
+    w, h = 800, 520
+    pad = 90
+    
+    min_x, max_x = np.min(x), np.max(x)
+    min_y, max_y = np.min(y), np.max(y)
+    
+    rx = max_x - min_x if max_x != min_x else 1.0
+    ry = max_y - min_y if max_y != min_y else 1.0
+    
+    scale = min((w - 2 * pad) / rx, (h - 2 * pad) / ry)
+    
+    cx = (min_x + max_x) / 2
+    cy = (min_y + max_y) / 2
+    
+    sx = (x - cx) * scale + w / 2
+    sy = h / 2 - (y - cy) * scale  # Invertido para eje Y informático
+    
+    pts = " ".join([f"{sx[i]:.1f},{sy[i]:.1f}" for i in range(len(x))])
+    
+    svg_elements = []
+    
+    # Relleno del polígono
+    svg_elements.append(f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />')
+    
+    n = len(x)
+    # Linderos con sus medidas
+    for i in range(n):
+        i_next = (i + 1) % n
+        mx = (sx[i] + sx[i_next]) / 2
+        my = (sy[i] + sy[i_next]) / 2
+        dist_str = f"{distancias[i]:.2f} m"
+        
+        rect_w = len(dist_str) * 9.5 + 14
+        svg_elements.append(f'''
+            <g transform="translate({mx:.1f}, {my:.1f})">
+                <rect x="{-rect_w/2:.1f}" y="-13" width="{rect_w}" height="25" rx="6" fill="#1e293b" stroke="#fde047" stroke-width="1.8" />
+                <text x="0" y="4" fill="#fde047" font-size="12.5" font-weight="900" text-anchor="middle" font-family="sans-serif">{dist_str}</text>
+            </g>
+        ''')
+        
+    # Vértices con sus etiquetas
+    for i in range(n):
+        svg_elements.append(f'<circle cx="{sx[i]:.1f}" cy="{sy[i]:.1f}" r="7" fill="#f472b6" stroke="#ffffff" stroke-width="2.5" />')
+        svg_elements.append(f'<text x="{sx[i]+12:.1f}" y="{sy[i]-12:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.8))">{vertices[i]}</text>')
+        
+    svg_code = f'''
+    <div style="width: 100%; text-align: center;">
+        <svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 850px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            {"".join(svg_elements)}
+        </svg>
+    </div>
+    '''
+    return svg_code
+
 # --- FUNCIÓN GENERADORA DE KML ---
 def generar_kml(vertices_nombres, lons, lats, area_m2, perimetro):
     coords_poligono = " ".join([f"{lon},{lat},0" for lon, lat in zip(lons, lats)])
@@ -213,7 +274,7 @@ datos_defecto = pd.DataFrame({
 
 # --- SECCIÓN 1: ENTRADA DE DATOS ---
 st.subheader("1. Coordenadas del Predio")
-st.info("💡 Edita o agrega vértices UTM. Si creas una fila vacía por error, el sistema la filtrará automáticamente.")
+st.info("💡 Edita o agrega vértices UTM. Si habilitas una fila sin datos por error, el sistema la descartará automáticamente.")
 
 df_coords = st.data_editor(
     datos_defecto,
@@ -304,61 +365,10 @@ if len(df_clean) >= 3:
     
     tab_plano, tab_mapa, tab_kml = st.tabs(["📐 Plano 2D (Medidas)", "🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
     
-    # TAB 1: DIBUJO DEL TERRENO EN 2D CON MEDIDAS (TIPO CAD)
+    # TAB 1: DIBUJO VECTORIAL NATIVO SVG CON MEDIDAS
     with tab_plano:
-        fig, ax = plt.subplots(figsize=(9, 6.5), facecolor="#0f172a")
-        ax.set_facecolor("#0f172a")
-
-        # Polígono Cerrado
-        x_plot = np.append(x, x[0])
-        y_plot = np.append(y, y[0])
-
-        # Relleno y Líneas
-        ax.fill(x_plot, y_plot, color="#38bdf8", alpha=0.25)
-        ax.plot(x_plot, y_plot, color="#38bdf8", linewidth=2.5, marker="o", markersize=7, markerfacecolor="#f472b6", markeredgecolor="white")
-
-        # Anotación de Vértices y Medidas en Cada Lado
-        for i in range(n):
-            # Etiqueta de Vértice
-            ax.annotate(
-                f"  {vertices_nombres[i]}", 
-                (x[i], y[i]), 
-                color="#ffffff", 
-                fontsize=11, 
-                fontweight="bold"
-            )
-            
-            # Punto medio del tramo para colocar la medida
-            mx = (x[i] + x[(i+1)%n]) / 2
-            my = (y[i] + y[(i+1)%n]) / 2
-            dist_text = f"{distancias[i]:.2f} m"
-            
-            # Caja con el valor de la medida
-            ax.annotate(
-                dist_text, 
-                (mx, my), 
-                color="#fde047", 
-                fontsize=9.5, 
-                fontweight="bold",
-                ha='center', 
-                va='center',
-                bbox=dict(boxstyle="round,pad=0.3", fc="#1e293b", ec="#fde047", lw=1.5)
-            )
-
-        # Ajustes de cuadrícula y ejes
-        ax.grid(True, linestyle="--", alpha=0.3, color="#ffffff")
-        ax.tick_params(colors="#ffffff", labelsize=9)
-        for spine in ax.spines.values():
-            spine.set_color("#ffffff")
-            spine.set_linewidth(1)
-
-        ax.set_title("📐 Esquema Perimétrico del Terreno (Escala Real UTM)", color="#ffffff", fontsize=13, fontweight="bold", pad=15)
-        ax.set_xlabel("Este - X (m)", color="#ffffff", fontsize=10, fontweight="bold")
-        ax.set_ylabel("Norte - Y (m)", color="#ffffff", fontsize=10, fontweight="bold")
-        ax.set_aspect('equal', 'datalim') # Conserva la forma geométrica real sin deformar
-        
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
+        svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
+        st.markdown(svg_plano, unsafe_allow_html=True)
 
     # TAB 2: MAPA SATELITAL CON ETIQUETAS DE MEDIDAS
     with tab_mapa:
