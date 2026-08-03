@@ -13,21 +13,30 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES ALTO CONTRASTE (FRESCO & LECTURA CLARA) ---
+# --- ESTILOS VISUALES ALTO CONTRASTE (CERO GRISES) ---
 st.markdown("""
     <style>
     /* Fondo principal */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        color: #ffffff;
-    }
-    
-    /* Titulares de sección */
-    h1, h2, h3, .stSubheader {
         color: #ffffff !important;
-        font-weight: 700 !important;
     }
     
+    /* ELIMINACIÓN DE TEXTO GRIS EN SUBTÍTULOS (st.caption) */
+    [data-testid="stCaptionContainer"], .stCaption {
+        color: #38bdf8 !important; /* Cyan neón brillante */
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ENCABEZADOS Y SUBENCABEZADOS (st.subheader) */
+    h1, h2, h3, .stSubheader, [data-testid="stMarkdownContainer"] h3 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    
+    /* TÍTULO PRINCIPAL */
     .title-text {
         font-size: 2.3rem;
         font-weight: 800;
@@ -37,61 +46,80 @@ st.markdown("""
         margin-bottom: 0.2rem;
     }
     
-    /* MÉTRICAS (RESULTADOS) */
+    /* CAJAS DE INFORMACIÓN (st.info) */
+    div[data-testid="stAlert"] {
+        background-color: rgba(30, 41, 59, 0.95) !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 12px !important;
+    }
+    div[data-testid="stAlert"] p {
+        color: #f8fafc !important; /* Blanco puro */
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+    }
+    
+    /* ACORDEÓN / EXPANDER */
+    details summary p {
+        color: #38bdf8 !important; /* Cyan brillante */
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
+    }
+    
+    /* MÉTRICAS (RESULTADOS GEOMÉTRICOS) */
     div[data-testid="metric-container"] {
-        background: rgba(15, 23, 42, 0.85) !important;
+        background: rgba(15, 23, 42, 0.9) !important;
         border: 2px solid #38bdf8 !important;
         backdrop-filter: blur(12px);
         border-radius: 16px;
         padding: 18px;
-        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.2);
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.25);
         transition: transform 0.25s ease;
     }
     
     div[data-testid="metric-container"]:hover {
         transform: translateY(-4px);
         border-color: #f472b6 !important;
-        box-shadow: 0 10px 30px rgba(244, 114, 182, 0.3);
+        box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
     }
     
-    /* Etiquetas de la métrica */
+    /* Etiquetas de Métricas (Área, Perímetro) */
     div[data-testid="stMetricLabel"] {
-        color: #7dd3fc !important;
+        color: #7dd3fc !important; /* Celeste vivo */
         font-weight: 700 !important;
-        font-size: 1.1rem !important;
+        font-size: 1.15rem !important;
     }
     
-    /* Valores numéricos */
+    /* Valores Numéricos de Métricas */
     div[data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 1.8rem !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        color: #ffffff !important; /* Blanco total */
+        font-weight: 900 !important;
+        font-size: 1.9rem !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
     }
     
-    /* Personalización de Pestañas */
+    /* PESTAÑAS (TABS) */
     button[data-baseweb="tab"] {
         font-weight: 700 !important;
-        color: #cbd5e1 !important;
+        color: #f1f5f9 !important; /* Blanco claro (evita gris) */
         border-radius: 10px;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #38bdf8 !important;
-        background-color: rgba(56, 189, 248, 0.15) !important;
+        background-color: rgba(56, 189, 248, 0.2) !important;
         border-bottom: 2px solid #38bdf8 !important;
     }
     
-    /* Footer con Firma Drew Code, Datos de Contacto y Corazón Nolan */
+    /* FOOTER (DREW CODE, CONTACTO Y NOLAN) */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
         padding: 24px;
-        background: linear-gradient(135deg, rgba(30, 27, 75, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%);
         border: 2px solid #a855f7;
         border-radius: 20px;
         text-align: center;
         backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.25);
+        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.3);
     }
     .drew-brand {
         font-size: 1.5rem;
@@ -103,15 +131,15 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .drew-contact {
-        color: #f1f5f9;
+        color: #ffffff !important;
         font-size: 1.05rem;
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 14px;
         line-height: 1.8;
     }
     .drew-bless {
-        color: #f472b6;
-        font-weight: 600;
+        color: #f472b6 !important; /* Rosa brillante */
+        font-weight: 700;
         font-size: 1.05rem;
         margin-top: 8px;
     }
