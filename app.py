@@ -1,3 +1,4 @@
+import io
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -7,6 +8,13 @@ import folium
 from streamlit_folium import st_folium
 import math
 
+# --- IMPORTACIONES REPORTLAB (PDF INSTITUCIONAL) ---
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
     page_title="Calculadora Predial & Memoria Descriptiva | Drew Code",
@@ -14,6 +22,48 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# --- CANVAS PERSONALIZADO PARA NUMERACIÓN Y MARCA DE AGUA ---
+class NumberedCanvas(canvas.Canvas):
+    """
+    Canvas de doble pasada para calcular el total de páginas dinámicamente 
+    e insertar elementos institucionales estandarizados (Trazabilidad legal).
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_elements(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_elements(self, page_count):
+        self.saveState()
+        
+        # 1. Marca de agua institucional corporativa
+        self.setFont('Helvetica-Bold', 50)
+        self.setFillColor(colors.HexColor('#CCCCCC'), alpha=0.10)
+        self.saveState()
+        self.translate(300, 400)
+        self.rotate(45)
+        self.drawCentredString(0, 0, "USO OFICIAL 2026")
+        self.restoreState()
+        
+        # 2. Pie de página con autoría y paginación legal
+        self.setFont('Helvetica', 8)
+        self.setFillColor(colors.HexColor('#444444'))
+        self.drawString(54, 30, "Elaborado por: Área Técnica & Saneamiento | Drew Code")
+        self.drawRightString(558, 30, f"Página {self._pageNumber} de {page_count}")
+        
+        self.restoreState()
 
 # --- CACHÉ DE OPTIMIZACIÓN PYPROJ ---
 @st.cache_resource
@@ -174,6 +224,168 @@ def generar_svg_plano(x, y, vertices, distancias):
         </svg>
     </div>
     '''
+
+# --- FUNCIÓN DE GENERACIÓN DE PDF INSTITUCIONAL CON REPORTLAB ---
+def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=54,
+        leftMargin=54,
+        topMargin=54,
+        bottomMargin=54
+    )
+    
+    styles = getSampleStyleSheet()
+    story = []
+    
+    title_style = ParagraphStyle(
+        'MainTitle',
+        parent=styles['Heading1'],
+        fontSize=14,
+        leading=16,
+        textColor=colors.HexColor('#1E293B'),
+        spaceAfter=4,
+        alignment=1
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'SubTitle',
+        parent=styles['Heading2'],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#64748B'),
+        spaceAfter=15,
+        alignment=1
+    )
+    
+    section_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#0284C7'),
+        spaceBefore=12,
+        spaceAfter=6
+    )
+    
+    body_style = ParagraphStyle(
+        'BodyDark',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#334155')
+    )
+    
+    table_cell_style = ParagraphStyle(
+        'TableCell',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor('#1E293B'),
+        alignment=1
+    )
+    
+    table_header_style = ParagraphStyle(
+        'TableHeader',
+        parent=styles['Normal'],
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor('#0F172A'),
+        fontName="Helvetica-Bold",
+        alignment=1
+    )
+
+    # Cabecera
+    story.append(Paragraph("MEMORIA DESCRIPTIVA TÉCNICA OFICIAL", title_style))
+    story.append(Paragraph(f"SANEAMIENTO FÍSICO LEGAL Y CATASTRAL - DATOS UTM ({opcion_zona})", subtitle_style))
+    
+    # Cuadro de Datos Generales
+    info_data = [
+        [Paragraph("<b>1. PROPIETARIO / ADMINISTRADO:</b>", body_style), Paragraph(prop_nombre, body_style)],
+        [Paragraph("<b>2. D.N.I. / R.U.C.:</b>", body_style), Paragraph(prop_dni, body_style)],
+        [Paragraph("<b>3. EXPEDIENTE / TRÁMITE:</b>", body_style), Paragraph(num_tramite, body_style)],
+        [Paragraph("<b>4. UBICACIÓN DEL PREDIO:</b>", body_style), Paragraph(ubicacion_predio, body_style)]
+    ]
+    t_info = Table(info_data, colWidths=[150, 354])
+    t_info.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(t_info)
+    story.append(Spacer(1, 10))
+    
+    # Descripción del terreno
+    story.append(Paragraph("5. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
+    desc_texto = f"El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. El terreno presenta una configuración geométrica regular con linderos rectos definidos por {len(x)} vértices principales."
+    story.append(Paragraph(desc_texto, body_style))
+    story.append(Spacer(1, 6))
+    
+    # Cuadro de Coordenadas y Linderos
+    story.append(Paragraph(f"6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})", section_style))
+    
+    n = len(x)
+    table_rows = [[
+        Paragraph("LADO", table_header_style),
+        Paragraph("RUMBO", table_header_style),
+        Paragraph("DISTANCIA (m)", table_header_style),
+        Paragraph("AZIMUT", table_header_style),
+        Paragraph("ESTE (X)", table_header_style),
+        Paragraph("NORTE (Y)", table_header_style)
+    ]]
+    
+    for i in range(n):
+        i_sig = (i + 1) % n
+        table_rows.append([
+            Paragraph(f"{vertices_nombres[i]} - {vertices_nombres[i_sig]}", table_cell_style),
+            Paragraph(str(rumbos_text[i]), table_cell_style),
+            Paragraph(f"{distancias[i]:.2f}", table_cell_style),
+            Paragraph(str(azimuts_dms[i]), table_cell_style),
+            Paragraph(f"{x[i]:.4f}", table_cell_style),
+            Paragraph(f"{y[i]:.4f}", table_cell_style)
+        ])
+        
+    t_coords = Table(table_rows, colWidths=[65, 80, 75, 85, 95, 104])
+    t_coords.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F1F5F9')),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#334155')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    story.append(t_coords)
+    
+    resumen_totales = Paragraph(f"<b>Área Total: {area_m2:,.2f} m² | Perímetro Total: {perimetro:,.2f} m</b>", ParagraphStyle('TotalRight', parent=styles['Normal'], fontSize=8.5, alignment=2, spaceBefore=4, textColor=colors.HexColor('#0F172A')))
+    story.append(resumen_totales)
+    story.append(Spacer(1, 15))
+    
+    # Bloque de Firmas
+    firmas_data = [
+        [
+            Paragraph(f"<b>{prop_nombre}</b><br/>Propietario / Administrado<br/>DNI: {prop_dni}", table_cell_style),
+            Paragraph("<b>Especialista / Fiscalizador</b><br/>Área Técnica - Municipalidad", table_cell_style)
+        ]
+    ]
+    t_firmas = Table(firmas_data, colWidths=[230, 230])
+    t_firmas.setStyle(TableStyle([
+        ('LINEABOVE', (0,0), (0,0), 0.75, colors.HexColor('#334155')),
+        ('LINEABOVE', (1,0), (1,0), 0.75, colors.HexColor('#334155')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    ]))
+    story.append(t_firmas)
+    
+    doc.build(story, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 # --- ESTILOS VISUALES Y ADAPTABILIDAD MÓVIL (RESPONSIVE) ---
 st.markdown("""
@@ -395,7 +607,6 @@ if len(df_clean) >= 3:
         azimuts_deg.append(az_d)
         azimuts_dms.append(az_str)
         
-        # Cálculo de rumbos para la memoria descriptiva
         dx_val = dx[i]
         dy_val = dy[i]
         val_ang = math.degrees(math.atan2(abs(dx_val), abs(dy_val)))
@@ -514,10 +725,10 @@ if len(df_clean) >= 3:
         dxf_data = generar_dxf(vertices_nombres, x, y)
         st.download_button(label="✏️ Descargar plano en formato AutoCAD (.DXF)", data=dxf_data, file_name="plano_perimetrico_utm.dxf", mime="application/dxf", use_container_width=True)
 
-    # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL ---
+    # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL (PDF REPORTLAB) ---
     st.markdown("---")
     st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
-    st.info("💡 Ingresa los datos del administrado/propietario y expediente para generar el formato institucional listo para imprimir y exportar como PDF.")
+    st.info("💡 Ingresa los datos del administrado/propietario y expediente para generar el formato institucional formal en PDF con numeración y membrete corporativo.")
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
@@ -529,123 +740,21 @@ if len(df_clean) >= 3:
 
     ubicacion_predio = st.text_input("📍 Ubicación del Predio (Sector, Distrito, Provincia, Departamento)", "Sector Urbano / Expansión, Abancay, Apurímac")
 
-    # Generación de la Memoria Descriptiva formateada para impresión institucional
-    filas_tabla_html = ""
-    for i in range(n):
-        i_sig = (i + 1) % n
-        filas_tabla_html += f"""
-        <tr>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{vertices_nombres[i]} - {vertices_nombres[i_sig]}</td>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{rumbos_text[i]}</td>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{distancias[i]:.2f}</td>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{azimuts_dms[i]}</td>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{x[i]:.4f}</td>
-            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{y[i]:.4f}</td>
-        </tr>
-        """
-
-    html_memoria = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                color: #0f172a;
-                background-color: #ffffff;
-                margin: 0;
-                padding: 20px;
-                line-height: 1.5;
-            }}
-            .report-container {{
-                max-width: 800px;
-                margin: 0 auto;
-                background: #ffffff;
-                padding: 30px;
-                border: 2px solid #cbd5e1;
-                border-radius: 8px;
-            }}
-            h1 {{ text-align: center; font-size: 20px; color: #1e293b; text-transform: uppercase; margin-bottom: 5px; }}
-            h2 {{ text-align: center; font-size: 14px; color: #64748b; margin-bottom: 25px; }}
-            h3 {{ font-size: 14px; color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 4px; margin-top: 20px; }}
-            p {{ font-size: 12px; text-align: justify; color: #334155; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }}
-            th {{ background-color: #f1f5f9; border: 1px solid #334155; padding: 6px; color: #0f172a; text-align: center; }}
-            td {{ color: #1e293b; }}
-            .info-box {{ background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; font-size: 12px; }}
-            .print-btn {{
-                display: block; width: 100%; padding: 14px; background-color: #0284c7; color: #ffffff;
-                text-align: center; font-weight: bold; font-size: 15px; border: none; border-radius: 8px;
-                cursor: pointer; margin-bottom: 25px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            }}
-            .print-btn:hover {{ background-color: #0369a1; }}
-            @media print {{
-                .print-btn {{ display: none; }}
-                body {{ padding: 0; background: #ffffff; }}
-                .report-container {{ border: none; padding: 0; box-shadow: none; max-width: 100%; }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="report-container">
-            <button class="print-btn" onclick="window.print()">🖨️ IMPRIMIR / GUARDAR COMO PDF (HOJA GUÍA)</button>
-            
-            <h1>MEMORIA DESCRIPTIVA TÉCNICA</h1>
-            <h2>SANEAMIENTO FÍSICO LEGAL Y CATASTRAL - DATOS UTM ({opcion_zona})</h2>
-            
-            <div class="info-box">
-                <b>1. PROPIETARIO / ADMINISTRADO:</b> {prop_nombre}<br>
-                <b>2. D.N.I. / R.U.C.:</b> {prop_dni}<br>
-                <b>3. EXPEDIENTE / TRÁMITE:</b> {num_tramite}<br>
-                <b>4. UBICACIÓN DEL PREDIO:</b> {ubicacion_predio}
-            </div>
-
-            <h3>5. DESCRIPCIÓN DEL TERRENO Y LINDEROS</h3>
-            <p>
-                El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}. 
-                Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. 
-                El terreno presenta una configuración geométrica regular con linderos rectos definidos por {n} vértices principales.
-            </p>
-
-            <h3>6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>LADO</th>
-                        <th>RUMBO</th>
-                        <th>DISTANCIA (m)</th>
-                        <th>AZIMUT</th>
-                        <th>ESTE (X)</th>
-                        <th>NORTE (Y)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filas_tabla_html}
-                </tbody>
-            </table>
-            <p style="margin-top: 6px; text-align: right; font-weight: bold;">Área Total: {area_m2:,.2f} m² | Perímetro Total: {perimetro:,.2f} m</p>
-
-            <h3>7. VISUALIZACIÓN GRÁFICA (PLANO PERIMÉTRICO 2D)</h3>
-            <div style="text-align: center; margin-top: 10px;">
-                {svg_plano}
-            </div>
-
-            <div style="margin-top: 50px; display: flex; justify-content: space-around; text-align: center; font-size: 11px;">
-                <div style="border-top: 1px solid #334155; width: 220px; padding-top: 5px;">
-                    <b>{prop_nombre}</b><br>Propietario / Administrado<br>DNI: {prop_dni}
-                </div>
-                <div style="border-top: 1px solid #334155; width: 220px; padding-top: 5px;">
-                    <b>Especialista / Fiscalizador</b><br>Área Técnica - Municipalidad
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-    st.markdown("### Vista Previa de la Hoja Guía Oficial:")
-    components.html(html_memoria, height=850, scrolling=True)
+    # Botón de Descarga del PDF Oficial generado con ReportLab
+    if st.button("📥 Generar Archivo PDF Institucional"):
+        pdf_bytes = generar_pdf_memoria(
+            prop_nombre, prop_dni, num_tramite, ubicacion_predio, 
+            opcion_zona, area_m2, area_ha, perimetro, 
+            vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
+        )
+        st.success("¡Memoria Descriptiva y Hoja Guía generada correctamente bajo estándares normativos!")
+        st.download_button(
+            label="💾 Descargar Memoria Descriptiva en PDF",
+            data=pdf_bytes,
+            file_name=f"{num_tramite.replace('/', '_')}_memoria_descriptiva.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos, planos y la memoria descriptiva.")
