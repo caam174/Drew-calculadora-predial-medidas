@@ -50,7 +50,7 @@ st.markdown("""
         margin-bottom: 0.3rem;
     }
 
-    /* 5. TABLA DE EDICIÓN Y CAMPOS (Fondo Blanco -> Texto Negro) */
+    /* 5. TABLA DE EDICIÓN Y CAMPOS */
     div[data-testid="stDataEditor"], 
     div[role="grid"], 
     div[role="grid"] *,
@@ -86,29 +86,44 @@ st.markdown("""
     }
 
     .metric-num {
-        color: #38bdf8 !important; /* Azul cian neón */
-        font-size: 3.2rem !important; /* Tamaño Gigante */
+        color: #38bdf8 !important;
+        font-size: 3.2rem !important;
         font-weight: 900 !important;
         line-height: 1.1 !important;
         text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 7. CAJAS DE ALERTA E INFORMACIÓN */
-    div[data-testid="stAlert"] {
+    /* 7. ESTILO CORREGIDO PARA BOTONES DE ENLACE (GOOGLE EARTH / MAPS) */
+    a[data-testid="stLinkButton"] {
         background-color: #1e293b !important;
-        border: 2px solid #ffffff !important;
+        border: 2px solid #38bdf8 !important;
         border-radius: 12px !important;
+        text-align: center !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
     }
-    div[data-testid="stAlert"] p {
-        color: #ffffff !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
+
+    a[data-testid="stLinkButton"] p, 
+    a[data-testid="stLinkButton"] span, 
+    a[data-testid="stLinkButton"] div {
+        color: #38bdf8 !important;
+        font-weight: 800 !important;
+        font-size: 1.05rem !important;
+    }
+
+    a[data-testid="stLinkButton"]:hover {
+        background-color: #38bdf8 !important;
+        border-color: #ffffff !important;
+    }
+
+    a[data-testid="stLinkButton"]:hover p, 
+    a[data-testid="stLinkButton"]:hover span {
+        color: #0f172a !important;
     }
 
     /* 8. PESTAÑAS (TABS) Y EXPANDER */
     button[data-baseweb="tab"], button[data-baseweb="tab"] * {
         color: #ffffff !important;
-        font-size: 1.2rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
@@ -162,7 +177,7 @@ st.caption("⚡ Cálculo de superficie, perímetro, plano perimétrico y geoloca
 # --- FUNCIÓN DIBUJO VECTORIAL SVG DEL PLANO 2D ---
 def generar_svg_plano(x, y, vertices, distancias):
     w, h = 800, 500
-    pad = 100  # Margen amplio para evitar cortes de texto
+    pad = 100
     
     min_x, max_x = np.min(x), np.max(x)
     min_y, max_y = np.min(y), np.max(y)
@@ -176,24 +191,23 @@ def generar_svg_plano(x, y, vertices, distancias):
     cy = (min_y + max_y) / 2
     
     sx = (x - cx) * scale + w / 2
-    sy = h / 2 - (y - cy) * scale  # Inversión de coordenadas Y
+    sy = h / 2 - (y - cy) * scale
     
     pts = " ".join([f"{sx[i]:.1f},{sy[i]:.1f}" for i in range(len(x))])
     
     svg_elements = []
     
-    # Polígono base del terreno
+    # Polígono del predio
     svg_elements.append(f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />')
     
     n = len(x)
-    # Linderos con medidas alineadas al tramo (Alineación CAD)
+    # Linderos con cotas rotadas tipo CAD
     for i in range(n):
         i_next = (i + 1) % n
         mx = (sx[i] + sx[i_next]) / 2
         my = (sy[i] + sy[i_next]) / 2
         dist_str = f"{distancias[i]:.2f} m"
         
-        # Cálculo del ángulo del lado para orientar la etiqueta
         dx_p = sx[i_next] - sx[i]
         dy_p = sy[i_next] - sy[i]
         angle = np.degrees(np.arctan2(dy_p, dx_p))
@@ -210,7 +224,7 @@ def generar_svg_plano(x, y, vertices, distancias):
             f'</g>'
         )
         
-    # Vértices con identificadores desfasados
+    # Vértices con identificadores
     for i in range(n):
         vx = sx[i] + (16 if sx[i] >= w/2 else -26)
         vy = sy[i] + (16 if sy[i] >= h/2 else -10)
@@ -299,7 +313,7 @@ df_coords = st.data_editor(
     }
 )
 
-# --- LIMPIEZA AUTOMÁTICA DE FILAS INCOMPLETAS O VACÍAS ---
+# --- LIMPIEZA AUTOMÁTICA DE FILAS INCOMPLETAS ---
 df_clean = df_coords.copy()
 df_clean["Este_X"] = pd.to_numeric(df_clean["Este_X"], errors="coerce")
 df_clean["Norte_Y"] = pd.to_numeric(df_clean["Norte_Y"], errors="coerce")
@@ -313,19 +327,19 @@ if len(df_clean) >= 3:
     vertices_nombres = df_clean["Vértice"].astype(str).tolist()
     n = len(x)
     
-    # Algoritmo de Gauss / Shoelace para Superficie
+    # Algoritmo de Gauss / Shoelace
     suma_desc = np.sum(x * np.roll(y, -1))
     suma_asc = np.sum(y * np.roll(x, -1))
     area_m2 = abs(suma_desc - suma_asc) / 2.0
     area_ha = area_m2 / 10000.0
     
-    # Cálculo de Perímetro y Distancias de Linderos
+    # Perímetro y Distancias de Linderos
     dx = np.roll(x, -1) - x
     dy = np.roll(y, -1) - y
     distancias = np.sqrt(dx**2 + dy**2)
     perimetro = np.sum(distancias)
     
-    # --- SECCIÓN 2: RESUMEN GEOMÉTRICO (NÚMEROS GIGANTES) ---
+    # --- SECCIÓN 2: RESUMEN GEOMÉTRICO ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
     
@@ -363,26 +377,27 @@ if len(df_clean) >= 3:
     
     with st.expander("🔍 Ver detalle de medidas por lindero en tabla"):
         st.dataframe(df_linderos, use_container_width=True)
+
+    # --- SECCIÓN 3: PLANO 2D PERIMÉTRICO (ITEM INDEPENDIENTE) ---
+    st.markdown("---")
+    st.subheader("3. Plano 2D Perimétrico (Medidas)")
+    svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
+    components.html(svg_plano, height=520)
         
-    # --- GEORREFERENCIACIÓN ---
+    # --- GEORREFERENCIACIÓN Y TRANSFRMACIÓN ---
     transformer = Transformer.from_crs("EPSG:32718", "EPSG:4326", always_xy=True)
     lons, lats = transformer.transform(x, y)
     
     centroide_lat = float(np.mean(lats))
     centroide_lon = float(np.mean(lons))
     
-    # --- SECCIÓN 3: VISUALIZACIÓN & PLANO PERIMÉTRICO ---
+    # --- SECCIÓN 4: GEOLOCALIZACIÓN & ARCHIVOS ---
     st.markdown("---")
-    st.subheader("3. Visualización & Archivos")
+    st.subheader("4. Geolocalización & Archivos")
     
-    tab_plano, tab_mapa, tab_kml = st.tabs(["📐 Plano 2D (Medidas)", "🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
-    
-    # TAB 1: DIBUJO VECTORIAL SVG RENDERIZADO DE FORMA AISLADA
-    with tab_plano:
-        svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
-        components.html(svg_plano, height=520)
+    tab_mapa, tab_kml = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
 
-    # TAB 2: MAPA SATELITAL CON ETIQUETAS DE MEDIDAS
+    # TAB MAPA SATELITAL
     with tab_mapa:
         url_ge = f"https://earth.google.com/web/@{centroide_lat},{centroide_lon},2380a,35d,0y,0h,0t,0r"
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
@@ -410,16 +425,13 @@ if len(df_clean) >= 3:
             popup=f"Área: {area_m2:.2f} m²"
         ).add_to(m)
         
-        # Marcadores de Vértices y Distancias intermedias en el Mapa
         for i in range(n):
-            # Marcador de Vértice
             folium.Marker(
                 location=[lats[i], lons[i]],
                 popup=f"{vertices_nombres[i]}: ({x[i]:.2f}, {y[i]:.2f})",
                 icon=folium.DivIcon(html=f'<div style="font-size: 10pt; color: white; font-weight: bold; background-color: #38bdf8; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">{vertices_nombres[i]}</div>')
             ).add_to(m)
             
-            # Marcador de Medida en el Punto Medio del Lindero
             lat_mid = (lats[i] + lats[(i+1)%n]) / 2
             lon_mid = (lons[i] + lons[(i+1)%n]) / 2
             folium.Marker(
@@ -429,7 +441,7 @@ if len(df_clean) >= 3:
             
         st_folium(m, use_container_width=True, height=450)
         
-    # TAB 3: DESCARGA DE ARCHIVO KML
+    # TAB DESCARGA KML
     with tab_kml:
         st.write("Descarga la poligonal georreferenciada para abrirla directamente en **Google Earth Pro**, **AutoCAD** o **QGIS**.")
         
