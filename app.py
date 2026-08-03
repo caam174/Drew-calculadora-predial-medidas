@@ -13,65 +13,88 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES AVANZADOS (FRESCO, JUVENIL Y MODERNO) ---
+# --- ESTILOS VISUALES ALTO CONTRASTE (FRESCO & LECTURA CLARA) ---
 st.markdown("""
     <style>
-    /* Fondo con degradado nocturno dinámico */
+    /* Fondo principal */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        color: #f8fafc;
+        color: #ffffff;
     }
     
-    /* Titulares con degradado Neón */
+    /* Titulares de sección */
+    h1, h2, h3, .stSubheader {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    
     .title-text {
-        font-size: 2.2rem;
+        font-size: 2.3rem;
         font-weight: 800;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+        background: linear-gradient(90deg, #38bdf8, #818cf8, #f472b6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.2rem;
     }
     
-    /* Tarjetas de Métricas con efecto Glassmorphism */
+    /* CORRECCIÓN DE CONTRASTE EN LAS MÉTRICAS (RESULTADOS) */
     div[data-testid="metric-container"] {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(15, 23, 42, 0.75) !important;
+        border: 2px solid #38bdf8 !important;
         backdrop-filter: blur(12px);
         border-radius: 16px;
-        padding: 16px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        transition: transform 0.25s ease, border-color 0.25s ease;
+        padding: 18px;
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.2);
+        transition: transform 0.25s ease;
     }
+    
     div[data-testid="metric-container"]:hover {
         transform: translateY(-4px);
-        border-color: #38bdf8;
+        border-color: #f472b6 !important;
+        box-shadow: 0 10px 30px rgba(244, 114, 182, 0.3);
+    }
+    
+    /* Etiquetas de la métrica (Área, Perímetro, etc.) */
+    div[data-testid="stMetricLabel"] {
+        color: #7dd3fc !important; /* Azul celeste brillante */
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Valores de la métrica (Números gigantes) */
+    div[data-testid="stMetricValue"] {
+        color: #ffffff !important; /* Blanco radiante */
+        font-weight: 800 !important;
+        font-size: 1.8rem !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
     }
     
     /* Personalización de Pestañas */
     button[data-baseweb="tab"] {
-        font-weight: 600;
-        color: #94a3b8;
+        font-weight: 700 !important;
+        color: #cbd5e1 !important;
         border-radius: 10px;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #38bdf8 !important;
-        background-color: rgba(56, 189, 248, 0.12) !important;
+        background-color: rgba(56, 189, 248, 0.15) !important;
+        border-bottom: 2px solid #38bdf8 !important;
     }
     
-    /* Footer con Firma Drew Code */
+    /* Footer con Firma Drew Code y Corazón Nolan */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
         padding: 24px;
-        background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.12) 100%);
-        border: 1px solid rgba(168, 85, 247, 0.3);
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 2px solid #a855f7;
         border-radius: 20px;
         text-align: center;
         backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.25);
     }
     .drew-brand {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: 800;
         letter-spacing: 0.5px;
         background: linear-gradient(90deg, #38bdf8, #a855f7);
@@ -80,14 +103,15 @@ st.markdown("""
         margin-bottom: 6px;
     }
     .drew-contact {
-        color: #cbd5e1;
-        font-size: 0.95rem;
-        margin-bottom: 8px;
+        color: #e2e8f0;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 12px;
     }
     .drew-bless {
         color: #f472b6;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 1rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -266,11 +290,23 @@ if len(df_coords) >= 3:
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices para proyectar el polígono y calcular la superficie.")
 
-# --- FIRMA DE AUTOR (DREW CODE) ---
+# --- FIRMA DE AUTOR (DREW CODE) & CORAZÓN NOLAN ---
 st.markdown("""
     <div class="drew-footer">
-        <div class="drew-brand">🚀 Desarrollado por DrewCode</div>
-        <div class="drew-contact">📱 ¿Consultas, soporte o nuevos desarrollos? Escribe o llama con toda confianza.</div>
-        <div class="drew-bless">✨ ¡Ten un excelente día! Si esta herramienta te fue de ayuda, me alegra mucho. ¡Que Dios te cuide y bendiga siempre! 🙏🏼</div>
+        <div style="text-align: center; margin-bottom: 12px;">
+            <svg width="90" height="80" viewBox="0 0 100 90" style="filter: drop-shadow(0px 0px 10px rgba(244, 114, 182, 0.8));">
+                <path d="M 50,85 A 25,25 0 0,1 10,40 A 20,20 0 0,1 50,20 A 20,20 0 0,1 90,40 A 25,25 0 0,1 50,85 Z" fill="url(#gradHeart)" />
+                <defs>
+                    <linearGradient id="gradHeart" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="900" font-family="sans-serif" letter-spacing="1">NOLAN</text>
+            </svg>
+        </div>
+        <div class="drew-brand">🚀 Creado por Drew Code</div>
+        <div class="drew-contact">📱 ¿Consultas o nuevos desarrollos? Cualquier cosa llamar o escribir con toda confianza.</div>
+        <div class="drew-bless">✨ Ten un buen día, y si te ayudó me alegra mucho. ¡Que Dios te cuide siempre! 🙏🏼</div>
     </div>
 """, unsafe_allow_html=True)
