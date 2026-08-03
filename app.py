@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES: MÁXIMA VISIBILIDAD Y TAMAÑO EXTRA GRANDE ---
+# --- ESTILOS VISUALES: CAJAS HIGHLIGHT Y TIPOGRAFÍA GIGANTE ---
 st.markdown("""
     <style>
     /* 1. FONDO PRINCIPAL */
@@ -22,18 +22,17 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* 2. REGLA GENERAL: TODO EL TEXTO EN FONDO OSCURO ES BLANCO PURO */
+    /* 2. REGLA GENERAL DE TEXTO EN FONDO OSCURO */
     .stApp p, .stApp span, .stApp label, .stApp div, .stApp small {
         color: #ffffff !important;
         opacity: 1 !important;
     }
 
-    /* 3. CAPTIONS Y TEXTOS SECUNDARIOS */
+    /* 3. CAPTIONS Y SUBTÍTULOS */
     [data-testid="stCaptionContainer"], .stCaption, div[data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
         font-size: 1.1rem !important;
         font-weight: 600 !important;
-        opacity: 1 !important;
     }
 
     /* 4. ENCABEZADOS Y TITULARES */
@@ -50,7 +49,7 @@ st.markdown("""
         margin-bottom: 0.3rem;
     }
 
-    /* 5. TABLA DE EDICIÓN Y CAMPOS DE ENTRADA (Fondo Claro -> Texto NEGRO) */
+    /* 5. TABLA DE EDICIÓN Y CAMPOS (Fondo Blanco -> Texto Negro) */
     div[data-testid="stDataEditor"], 
     div[role="grid"], 
     div[role="grid"] *,
@@ -65,7 +64,35 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    /* 6. CAJAS DE ALERTA E INFORMACIÓN (st.info) */
+    /* 6. CAJAS PERSONALIZADAS DEL RESUMEN GEOMÉTRICO (RESALTANTES) */
+    .metric-box {
+        background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+        border: 3px solid #38bdf8 !important;
+        border-radius: 18px !important;
+        padding: 20px 15px !important;
+        text-align: center !important;
+        box-shadow: 0 10px 25px rgba(56, 189, 248, 0.35) !important;
+        margin-bottom: 15px !important;
+    }
+
+    .metric-title {
+        color: #ffffff !important;
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 8px !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .metric-num {
+        color: #38bdf8 !important; /* Azul cian neón */
+        font-size: 3.2rem !important; /* Tamaño Gigante */
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
+    }
+
+    /* 7. CAJAS DE ALERTA E INFORMACIÓN */
     div[data-testid="stAlert"] {
         background-color: #1e293b !important;
         border: 2px solid #ffffff !important;
@@ -75,33 +102,6 @@ st.markdown("""
         color: #ffffff !important;
         font-size: 1.1rem !important;
         font-weight: 600 !important;
-    }
-
-    /* 7. TARJETAS DE CÁLCULO / RESUMEN GEOMÉTRICO (NÚMEROS GIGANTES) */
-    div[data-testid="metric-container"] {
-        background: rgba(15, 23, 42, 0.95) !important;
-        border: 3px solid #38bdf8 !important;
-        border-radius: 18px;
-        padding: 22px !important;
-        box-shadow: 0 10px 30px rgba(56, 189, 248, 0.3);
-        text-align: center !important;
-    }
-
-    /* Etiqueta de la Métrica (Nombre del dato) */
-    div[data-testid="stMetricLabel"], div[data-testid="stMetricLabel"] * {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 1.4rem !important;
-        margin-bottom: 8px !important;
-    }
-
-    /* Valor Numérico (MAXIMIZADO PARA LECTURA RÁPIDA) */
-    div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
-        color: #38bdf8 !important; /* Azul neón vibrante */
-        font-weight: 900 !important;
-        font-size: 3.2rem !important; /* Tamaño Gigante */
-        line-height: 1.1 !important;
-        text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
     }
 
     /* 8. PESTAÑAS (TABS) Y EXPANDER */
@@ -243,14 +243,35 @@ if len(df_coords) >= 3:
     distancias = np.sqrt(dx**2 + dy**2)
     perimetro = np.sum(distancias)
     
-    # --- SECCIÓN 2: RESULTADOS (GIGANTES) ---
+    # --- SECCIÓN 2: RESUMEN GEOMÉTRICO (CAJAS RESALTADAS DE ALTO IMPACTO) ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
     
     col1, col2, col3 = st.columns(3)
-    col1.metric("📐 Área Total", f"{area_m2:,.2f} m²")
-    col2.metric("🌾 Área en Hectáreas", f"{area_ha:,.4f} ha")
-    col3.metric("📏 Perímetro Total", f"{perimetro:,.2f} m")
+    
+    with col1:
+        st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">📐 Área Total</div>
+                <div class="metric-num">{area_m2:,.2f} m²</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">🌾 Hectáreas</div>
+                <div class="metric-num">{area_ha:,.4f} ha</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with col3:
+        st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">📏 Perímetro Total</div>
+                <div class="metric-num">{perimetro:,.2f} m</div>
+            </div>
+        """, unsafe_allow_html=True)
     
     vertices_nombres = df_coords["Vértice"].tolist()
     lados = [f"{vertices_nombres[i]} - {vertices_nombres[(i+1)%n]}" for i in range(n)]
