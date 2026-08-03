@@ -36,7 +36,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 4. ENCABEZADOS Y TÍTULO PRINCIPAL CELESTE NEÓN */
+    /* 4. ENCABEZADOS Y TÍTULO PRINCIPAL CELESTE NEÓN CENTRADO */
     h1, h2, h3, h4, .stSubheader {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -50,6 +50,7 @@ st.markdown("""
         text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.5), 0 0 40px rgba(56, 189, 248, 0.3) !important;
         margin-bottom: 0.3rem;
         letter-spacing: 0.5px;
+        text-align: center !important;
     }
 
     /* 5. TABLA DE EDICIÓN Y CAMPOS */
@@ -182,7 +183,13 @@ st.markdown("""
         font-size: 1.6rem;
         font-weight: 900;
         color: #ffffff !important;
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+    }
+    .drew-rights {
+        color: #cbd5e1 !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 12px;
     }
     .drew-contact {
         color: #ffffff !important;
@@ -200,9 +207,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABECERA ---
+# --- CABECERA CENTRADA ---
 st.markdown('<div class="title-text">📐 Calculadora Predial UTM</div>', unsafe_allow_html=True)
-st.caption("⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84 Zona 18S)")
+st.markdown("""
+    <div style="text-align: center; margin-bottom: 25px;">
+        <p style="color: #ffffff !important; font-size: 1.15rem; font-weight: 600; margin-bottom: 4px;">
+            ⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84 Zona 18S)
+        </p>
+    </div>
+""", unsafe_allow_html=True)
 
 # --- FUNCIÓN DIBUJO VECTORIAL SVG DEL PLANO 2D ---
 def generar_svg_plano(x, y, vertices, distancias):
@@ -490,7 +503,7 @@ if len(df_clean) >= 3:
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos y el plano.")
 
-# --- FIRMA DE AUTOR (DREW CODE) ---
+# --- FIRMA DE AUTOR (DREW CODE) Y DERECHOS RESERVADOS ---
 st.markdown("""
     <div class="drew-footer">
         <div style="text-align: center; margin-bottom: 12px;">
@@ -506,6 +519,7 @@ st.markdown("""
             </svg>
         </div>
         <div class="drew-brand">🚀 Creado por Drew Code</div>
+        <div class="drew-rights">© Todos los Derechos Reservados</div>
         <div class="drew-contact">
             📧 <b>Email:</b> <a href="mailto:caam174@gmail.com" style="color: #38bdf8; text-decoration: none;">caam174@gmail.com</a> <br>
             📱 <b>WhatsApp / Llama al:</b> <a href="https://wa.me/51983761229" target="_blank" style="color: #4ade80; text-decoration: none; font-weight: bold;">+51 983761229</a>
