@@ -5,6 +5,7 @@ import numpy as np
 from pyproj import Transformer
 import folium
 from streamlit_folium import st_folium
+import math
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
@@ -13,6 +14,167 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# --- CACHÉ DE OPTIMIZACIÓN PYPROJ ---
+@st.cache_resource
+def obtener_transformador(epsg_code):
+    return Transformer.from_crs(epsg_code, "EPSG:4326", always_xy=True)
+
+# --- FUNCIONES DE CÁLCULO TOPOGRÁFICO Y EXPORTACIÓN ---
+def decimal_a_dms(deg):
+    deg = deg % 360
+    d = int(deg)
+    m_full = (deg - d) * 60
+    m = int(m_full)
+    s = (m_full - m) * 60
+    return f"{d:02d}° {m:02d}' {s:05.2f}\""
+
+def calcular_azimut(dx, dy):
+    # En topografía el Azimut se mide en sentido horario desde el Norte
+    angle_rad = math.atan2(dx, dy)
+    angle_deg = math.degrees(angle_rad) % 360
+    return angle_deg, decimal_a_dms(angle_deg)
+
+def verificar_autointersesion(x, y):
+    n = len(x)
+    if n < 4:
+        return False
+    
+    def ccw(A, B, C):
+        return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
+
+    def intersect(A, B, C, D):
+        return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
+
+    pts = list(zip(x, y))
+    for i in range(n):
+        p1, p2 = pts[i], pts[(i+1)%n]
+        for j in range(i+2, n):
+            if i == 0 and j == n - 1:
+                continue
+            p3, p4 = pts[j], pts[(j+1)%n]
+            if intersect(p1, p2, p3, p4):
+                return True
+    return False
+
+def generar_dxf(vertices_nombres, x, y):
+    n = len(x)
+    lines = [
+        "0", "SECTION", "2", "HEADER", "0", "ENDSEC",
+        "0", "SECTION", "2", "TABLES", "0", "ENDSEC",
+        "0", "SECTION", "2", "BLOCKS", "0", "ENDSEC",
+        "0", "SECTION", "2", "ENTITIES",
+        "0", "LWPOLYLINE", "8", "PREDIO_LINDEROS",
+        "90", str(n), "70", "1"
+    ]
+    for i in range(n):
+        lines.extend(["10", f"{x[i]:.4f}", "20", f"{y[i]:.4f}"])
+        
+    for i in range(n):
+        lines.extend([
+            "0", "TEXT", "8", "PREDIO_VERTICES",
+            "10", f"{x[i]:.4f}", "20", f"{y[i]:.4f}",
+            "40", "1.5", "1", str(vertices_nombres[i]), "50", "0"
+        ])
+    lines.extend(["0", "ENDSEC", "0", "EOF"])
+    return "\n".join(lines)
+
+def generar_kml(vertices_nombres, lons, lats, area_m2, perimetro):
+    coords_poligono = " ".join([f"{lon},{lat},0" for lon, lat in zip(lons, lats)])
+    coords_poligono += f" {lons[0]},{lats[0]},0"
+    
+    marcadores_kml = ""
+    for nombre, lon, lat in zip(vertices_nombres, lons, lats):
+        marcadores_kml += f"""
+        <Placemark>
+            <name>{nombre}</name>
+            <Point>
+                <coordinates>{lon},{lat},0</coordinates>
+            </Point>
+        </Placemark>"""
+
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Predio_Calculado_DrewCode</name>
+    <description>Área: {area_m2:.2f} m², Perímetro: {perimetro:.2f} m</description>
+    <Style id="estiloPredio">
+      <LineStyle><color>ff0000ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>4000ffff</color></PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Polígono del Predio</name>
+      <styleUrl>#estiloPredio</styleUrl>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>{coords_poligono}</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    {marcadores_kml}
+  </Document>
+</kml>"""
+
+def generar_svg_plano(x, y, vertices, distancias):
+    w, h = 800, 500
+    pad = 100
+    
+    min_x, max_x = np.min(x), np.max(x)
+    min_y, max_y = np.min(y), np.max(y)
+    
+    rx = max_x - min_x if max_x != min_x else 1.0
+    ry = max_y - min_y if max_y != min_y else 1.0
+    
+    scale = min((w - 2 * pad) / rx, (h - 2 * pad) / ry)
+    cx, cy = (min_x + max_x) / 2, (min_y + max_y) / 2
+    
+    sx = (x - cx) * scale + w / 2
+    sy = h / 2 - (y - cy) * scale
+    
+    pts = " ".join([f"{sx[i]:.1f},{sy[i]:.1f}" for i in range(len(x))])
+    svg_elements = [f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />']
+    
+    n = len(x)
+    for i in range(n):
+        i_next = (i + 1) % n
+        mx, my = (sx[i] + sx[i_next]) / 2, (sy[i] + sy[i_next]) / 2
+        dist_str = f"{distancias[i]:.2f} m"
+        
+        dx_p = sx[i_next] - sx[i]
+        dy_p = sy[i_next] - sy[i]
+        angle = np.degrees(np.arctan2(dy_p, dx_p))
+        if angle > 90: angle -= 180
+        elif angle < -90: angle += 180
+
+        rect_w = len(dist_str) * 9.5 + 14
+        svg_elements.append(
+            f'<g transform="translate({mx:.1f}, {my:.1f}) rotate({angle:.1f})">'
+            f'<rect x="{-rect_w/2:.1f}" y="-13" width="{rect_w}" height="25" rx="6" fill="#1e293b" stroke="#fde047" stroke-width="1.8" />'
+            f'<text x="0" y="4" fill="#fde047" font-size="12.5" font-weight="900" text-anchor="middle" font-family="sans-serif">{dist_str}</text>'
+            f'</g>'
+        )
+        
+    for i in range(n):
+        vx = sx[i] + (16 if sx[i] >= w/2 else -26)
+        vy = sy[i] + (16 if sy[i] >= h/2 else -10)
+        svg_elements.append(f'<circle cx="{sx[i]:.1f}" cy="{sy[i]:.1f}" r="7" fill="#f472b6" stroke="#ffffff" stroke-width="2.5" />')
+        svg_elements.append(f'<text x="{vx:.1f}" y="{vy:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif">{vertices[i]}</text>')
+        
+    return f'''
+    <div style="width: 100%; display: flex; justify-content: center; background-color: transparent;">
+        <svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 800px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            {"".join(svg_elements)}
+        </svg>
+    </div>
+    '''
 
 # --- ESTILOS VISUALES DE ALTO IMPACTO ---
 st.markdown("""
@@ -122,7 +284,7 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 8. BOTÓN DE DESCARGA KML */
+    /* 8. BOTÓN DE DESCARGA KML / DXF */
     div[data-testid="stDownloadButton"] button {
         background-color: #1e293b !important;
         border: 2px solid #38bdf8 !important;
@@ -212,127 +374,34 @@ st.markdown('<div class="title-text">📐 Calculadora Predial UTM</div>', unsafe
 st.markdown("""
     <div style="text-align: center; margin-bottom: 25px;">
         <p style="color: #ffffff !important; font-size: 1.15rem; font-weight: 600; margin-bottom: 4px;">
-            ⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84 Zona 18S)
+            ⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84)
         </p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- FUNCIÓN DIBUJO VECTORIAL SVG DEL PLANO 2D ---
-def generar_svg_plano(x, y, vertices, distancias):
-    w, h = 800, 500
-    pad = 100
-    
-    min_x, max_x = np.min(x), np.max(x)
-    min_y, max_y = np.min(y), np.max(y)
-    
-    rx = max_x - min_x if max_x != min_x else 1.0
-    ry = max_y - min_y if max_y != min_y else 1.0
-    
-    scale = min((w - 2 * pad) / rx, (h - 2 * pad) / ry)
-    
-    cx = (min_x + max_x) / 2
-    cy = (min_y + max_y) / 2
-    
-    sx = (x - cx) * scale + w / 2
-    sy = h / 2 - (y - cy) * scale
-    
-    pts = " ".join([f"{sx[i]:.1f},{sy[i]:.1f}" for i in range(len(x))])
-    
-    svg_elements = []
-    
-    # Polígono base
-    svg_elements.append(f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />')
-    
-    n = len(x)
-    # Linderos con cotas rotadas tipo CAD
-    for i in range(n):
-        i_next = (i + 1) % n
-        mx = (sx[i] + sx[i_next]) / 2
-        my = (sy[i] + sy[i_next]) / 2
-        dist_str = f"{distancias[i]:.2f} m"
-        
-        dx_p = sx[i_next] - sx[i]
-        dy_p = sy[i_next] - sy[i]
-        angle = np.degrees(np.arctan2(dy_p, dx_p))
-        if angle > 90:
-            angle -= 180
-        elif angle < -90:
-            angle += 180
+# --- CONFIGURACIÓN TÉCNICA (ZONA Y ALTITUD) ---
+col_zone, col_alt = st.columns(2)
 
-        rect_w = len(dist_str) * 9.5 + 14
-        svg_elements.append(
-            f'<g transform="translate({mx:.1f}, {my:.1f}) rotate({angle:.1f})">'
-            f'<rect x="{-rect_w/2:.1f}" y="-13" width="{rect_w}" height="25" rx="6" fill="#1e293b" stroke="#fde047" stroke-width="1.8" />'
-            f'<text x="0" y="4" fill="#fde047" font-size="12.5" font-weight="900" text-anchor="middle" font-family="sans-serif">{dist_str}</text>'
-            f'</g>'
-        )
-        
-    # Vértices con identificadores
-    for i in range(n):
-        vx = sx[i] + (16 if sx[i] >= w/2 else -26)
-        vy = sy[i] + (16 if sy[i] >= h/2 else -10)
-        svg_elements.append(f'<circle cx="{sx[i]:.1f}" cy="{sy[i]:.1f}" r="7" fill="#f472b6" stroke="#ffffff" stroke-width="2.5" />')
-        svg_elements.append(f'<text x="{vx:.1f}" y="{vy:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif">{vertices[i]}</text>')
-        
-    svg_code = f'''
-    <div style="width: 100%; display: flex; justify-content: center; background-color: transparent;">
-        <svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 800px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-                </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-            {"".join(svg_elements)}
-        </svg>
-    </div>
-    '''
-    return svg_code
-
-# --- FUNCIÓN GENERADORA DE KML ---
-def generar_kml(vertices_nombres, lons, lats, area_m2, perimetro):
-    coords_poligono = " ".join([f"{lon},{lat},0" for lon, lat in zip(lons, lats)])
-    coords_poligono += f" {lons[0]},{lats[0]},0"
+with col_zone:
+    opcion_zona = st.selectbox(
+        "🌐 Zona UTM (Hemisferio Sur)",
+        ["Zona 18S (EPSG:32718) - Perú Centro/Sur", "Zona 17S (EPSG:32717) - Perú Norte", "Zona 19S (EPSG:32719) - Perú Este"],
+        index=0
+    )
     
-    marcadores_kml = ""
-    for nombre, lon, lat in zip(vertices_nombres, lons, lats):
-        marcadores_kml += f"""
-        <Placemark>
-            <name>{nombre}</name>
-            <Point>
-                <coordinates>{lon},{lat},0</coordinates>
-            </Point>
-        </Placemark>"""
+epsg_dict = {
+    "Zona 18S (EPSG:32718) - Perú Centro/Sur": "EPSG:32718",
+    "Zona 17S (EPSG:32717) - Perú Norte": "EPSG:32717",
+    "Zona 19S (EPSG:32719) - Perú Este": "EPSG:32719"
+}
+epsg_actual = epsg_dict[opcion_zona]
 
-    kml_str = f"""<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Predio_Calculado_DrewCode</name>
-    <description>Área: {area_m2:.2f} m², Perímetro: {perimetro:.2f} m</description>
-    <Style id="estiloPredio">
-      <LineStyle>
-        <color>ff0000ff</color>
-        <width>3</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>4000ffff</color>
-      </PolyStyle>
-    </Style>
-    <Placemark>
-      <name>Polígono del Predio</name>
-      <styleUrl>#estiloPredio</styleUrl>
-      <Polygon>
-        <outerBoundaryIs>
-          <LinearRing>
-            <coordinates>{coords_poligono}</coordinates>
-          </LinearRing>
-        </outerBoundaryIs>
-      </Polygon>
-    </Placemark>
-    {marcadores_kml}
-  </Document>
-</kml>"""
-    return kml_str
+with col_alt:
+    altitud_msnm = st.number_input(
+        "⛰️ Altitud Media (m.s.n.m. - Opcional)",
+        min_value=0.0, max_value=6000.0, value=0.0, step=50.0,
+        help="Permite proyectar el área plana UTM al área real en superficie de terreno."
+    )
 
 # --- DATOS POR DEFECTO ---
 datos_defecto = pd.DataFrame({
@@ -356,7 +425,7 @@ df_coords = st.data_editor(
     }
 )
 
-# --- LIMPIEZA AUTOMÁTICA DE FILAS INCOMPLETAS ---
+# --- LIMPIEZA AUTOMÁTICA ---
 df_clean = df_coords.copy()
 df_clean["Este_X"] = pd.to_numeric(df_clean["Este_X"], errors="coerce")
 df_clean["Norte_Y"] = pd.to_numeric(df_clean["Norte_Y"], errors="coerce")
@@ -370,18 +439,34 @@ if len(df_clean) >= 3:
     vertices_nombres = df_clean["Vértice"].astype(str).tolist()
     n = len(x)
     
+    # Validar si hay cruce de vértices
+    if verificar_autointersesion(x, y):
+        st.warning("⚠️ **Atención:** Se ha detectado una intersección entre linderos (polígono autointersectado). Verifica el orden secuencial de los vértices.")
+
     # Algoritmo de Gauss / Shoelace
     suma_desc = np.sum(x * np.roll(y, -1))
     suma_asc = np.sum(y * np.roll(x, -1))
     area_m2 = abs(suma_desc - suma_asc) / 2.0
     area_ha = area_m2 / 10000.0
     
-    # Perímetro y Distancias de Linderos
+    # Factor de elevación si se define altitud
+    r_tierra = 6371000.0
+    k_elev = r_tierra / (r_tierra + altitud_msnm) if altitud_msnm > 0 else 1.0
+    area_terreno_m2 = area_m2 / (k_elev ** 2)
+    
+    # Perímetro, Distancias y Azimuts
     dx = np.roll(x, -1) - x
     dy = np.roll(y, -1) - y
     distancias = np.sqrt(dx**2 + dy**2)
     perimetro = np.sum(distancias)
     
+    azimuts_dms = []
+    azimuts_deg = []
+    for i in range(n):
+        az_d, az_str = calcular_azimut(dx[i], dy[i])
+        azimuts_deg.append(az_d)
+        azimuts_dms.append(az_str)
+
     # --- SECCIÓN 2: RESUMEN GEOMÉTRICO ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
@@ -391,7 +476,7 @@ if len(df_clean) >= 3:
     with col1:
         st.markdown(f"""
             <div class="metric-box">
-                <div class="metric-title">📐 Área Total</div>
+                <div class="metric-title">📐 Área Plana UTM</div>
                 <div class="metric-num">{area_m2:,.2f} m²</div>
             </div>
         """, unsafe_allow_html=True)
@@ -412,23 +497,29 @@ if len(df_clean) >= 3:
             </div>
         """, unsafe_allow_html=True)
     
+    if altitud_msnm > 0:
+        st.info(f"⛰️ **Proyección de Superficie Real:** Para una altitud media de **{altitud_msnm:,.0f} m.s.n.m.** (Factor de elevación $K_{{elev}}$: `{k_elev:.6f}`), el Área en Terreno proyectada es **{area_terreno_m2:,.2f} m²**.")
+
     lados = [f"{vertices_nombres[i]} - {vertices_nombres[(i+1)%n]}" for i in range(n)]
     df_linderos = pd.DataFrame({
         "Lado": lados,
-        "Distancia (m)": np.round(distancias, 3)
+        "Distancia (m)": np.round(distancias, 3),
+        "Azimut (DD°MM'SS\")": azimuts_dms,
+        "Este Inicial (X)": np.round(x, 4),
+        "Norte Inicial (Y)": np.round(y, 4)
     })
     
-    with st.expander("🔍 Ver detalle de medidas por lindero en tabla"):
+    with st.expander("🔍 Ver Cuadro Técnico Oficial (Azimuts y Linderos)"):
         st.dataframe(df_linderos, use_container_width=True)
 
-    # --- SECCIÓN 3: PLANO 2D PERIMÉTRICO (ITEM INDEPENDIENTE) ---
+    # --- SECCIÓN 3: PLANO 2D PERIMÉTRICO ---
     st.markdown("---")
     st.subheader("3. Plano 2D Perimétrico (Medidas)")
     svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
     components.html(svg_plano, height=520)
         
-    # --- GEORREFERENCIACIÓN Y TRANSFORMACIÓN ---
-    transformer = Transformer.from_crs("EPSG:32718", "EPSG:4326", always_xy=True)
+    # --- GEORREFERENCIACIÓN Y TRANSFORMACIÓN CACHEADA ---
+    transformer = obtener_transformador(epsg_actual)
     lons, lats = transformer.transform(x, y)
     
     centroide_lat = float(np.mean(lats))
@@ -436,9 +527,9 @@ if len(df_clean) >= 3:
     
     # --- SECCIÓN 4: GEOLOCALIZACIÓN & ARCHIVOS ---
     st.markdown("---")
-    st.subheader("4. Geolocalización & Archivos")
+    st.subheader("4. Geolocalización & Archivos CAD")
     
-    tab_mapa, tab_kml = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
+    tab_mapa, tab_kml, tab_dxf = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar KML (Google Earth)", "📐 Exportar DXF (AutoCAD)"])
 
     # TAB MAPA SATELITAL
     with tab_mapa:
@@ -488,15 +579,27 @@ if len(df_clean) >= 3:
         
     # TAB DESCARGA KML
     with tab_kml:
-        st.write("Descarga la poligonal georreferenciada para abrirla directamente en **Google Earth Pro**, **AutoCAD** o **QGIS**.")
-        
+        st.write("Descarga la poligonal georreferenciada para abrirla en **Google Earth Pro**, **Global Mapper** o **QGIS**.")
         kml_data = generar_kml(vertices_nombres, lons, lats, area_m2, perimetro)
         
         st.download_button(
             label="🚀 Descargar archivo Predio.kml",
             data=kml_data,
-            file_name="predio_utm_18s.kml",
+            file_name="predio_utm.kml",
             mime="application/vnd.google-earth.kml+xml",
+            use_container_width=True
+        )
+
+    # TAB DESCARGA DXF (AUTOCAD)
+    with tab_dxf:
+        st.write("Descarga la poligonal vectorial directa en **formato `.DXF`** para abrir en AutoCAD, Civil 3D o software CAD.")
+        dxf_data = generar_dxf(vertices_nombres, x, y)
+        
+        st.download_button(
+            label="✏️ Descargar plano en formato AutoCAD (.DXF)",
+            data=dxf_data,
+            file_name="plano_perimetrico_utm.dxf",
+            mime="application/dxf",
             use_container_width=True
         )
 
