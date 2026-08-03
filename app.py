@@ -30,7 +30,6 @@ def decimal_a_dms(deg):
     return f"{d:02d}° {m:02d}' {s:05.2f}\""
 
 def calcular_azimut(dx, dy):
-    # En topografía el Azimut se mide en sentido horario desde el Norte
     angle_rad = math.atan2(dx, dy)
     angle_deg = math.degrees(angle_rad) % 360
     return angle_deg, decimal_a_dms(angle_deg)
@@ -176,7 +175,7 @@ def generar_svg_plano(x, y, vertices, distancias):
     </div>
     '''
 
-# --- ESTILOS VISUALES DE ALTO IMPACTO ---
+# --- ESTILOS VISUALES Y ADAPTABILIDAD MÓVIL (RESPONSIVE) ---
 st.markdown("""
     <style>
     /* 1. FONDO PRINCIPAL */
@@ -230,7 +229,7 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO (TARJETAS GIGANTES) */
+    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO */
     .metric-box {
         background: linear-gradient(145deg, #1e293b, #0f172a) !important;
         border: 3px solid #38bdf8 !important;
@@ -258,7 +257,7 @@ st.markdown("""
         text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 7. BOTONES PERSONALIZADOS HTML (GOOGLE EARTH / MAPS) */
+    /* 7. BOTONES PERSONALIZADOS HTML */
     .custom-btn {
         display: block !important;
         width: 100% !important;
@@ -330,15 +329,24 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 10. MARCO CUADRADO ESTILO BLACKBERRY PASSPORT PARA EL MAPA */
-    .passport-frame {
-        max-width: 620px;
-        margin: 0 auto;
-        padding: 8px;
-        background: #0f172a;
-        border: 3px solid #38bdf8;
-        border-radius: 20px;
-        box-shadow: 0 12px 30px rgba(56, 189, 248, 0.3);
+    /* 10. ESTILOS DE ADAPTACIÓN PARA SMARTPHONES/CELULARES */
+    @media (max-width: 768px) {
+        .title-text {
+            font-size: 2.1rem !important;
+        }
+        .metric-num {
+            font-size: 2.3rem !important;
+        }
+        .metric-title {
+            font-size: 1.05rem !important;
+        }
+        .metric-box {
+            padding: 12px 8px !important;
+        }
+        .custom-btn {
+            font-size: 0.95rem !important;
+            padding: 10px 12px !important;
+        }
     }
 
     /* 11. FIRMA DREW CODE Y CONTACTO */
@@ -542,7 +550,7 @@ if len(df_clean) >= 3:
     
     tab_mapa, tab_kml, tab_dxf = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar KML (Google Earth)", "📐 Exportar DXF (AutoCAD)"])
 
-    # TAB MAPA SATELITAL (ENCUADRE SQUARISH / BLACKBERRY PASSPORT 1:1)
+    # TAB MAPA SATELITAL (FORMATO CUADRADO TIPO BLACKBERRY PASSPORT 1:1)
     with tab_mapa:
         url_ge = f"https://earth.google.com/web/@{centroide_lat},{centroide_lon},2380a,35d,0y,0h,0t,0r"
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
@@ -586,10 +594,8 @@ if len(df_clean) >= 3:
                 icon=folium.DivIcon(html=f'<div style="font-size: 8.5pt; color: #000; font-weight: bold; background-color: #fde047; padding: 2px 4px; border-radius: 3px; border: 1px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">{distancias[i]:.2f}m</div>')
             ).add_to(m)
             
-        # ENCUADRE CENTRADO ESTILO BLACKBERRY PASSPORT (CUADRADO 1:1)
-        st.markdown('<div class="passport-frame">', unsafe_allow_html=True)
-        st_folium(m, use_container_width=True, height=580)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # RENDERIZADO DIRECTO DEL MAPA CUADRADO SIN CONTENEDORES EXTRA
+        st_folium(m, use_container_width=True, height=520)
         
     # TAB DESCARGA KML
     with tab_kml:
