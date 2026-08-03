@@ -3,3 +3,4 @@ pandas
 pyproj
 folium
 streamlit-folium
+reportlab
