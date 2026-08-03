@@ -68,7 +68,10 @@ class NumberedCanvas(canvas.Canvas):
 # --- CACHÉ DE OPTIMIZACIÓN PYPROJ ---
 @st.cache_resource
 def obtener_transformador(epsg_code):
-    return Transformer.from_crs(epsg_code, "EPSG:4326", always_xy=True)
+    try:
+        return Transformer.from_crs(epsg_code, "EPSG:4326", always_xy=True)
+    except Exception:
+        return None
 
 # --- FUNCIONES DE CÁLCULO TOPOGRÁFICO Y EXPORTACIÓN ---
 def decimal_a_dms(deg):
@@ -226,7 +229,7 @@ def generar_svg_plano(x, y, vertices, distancias):
     '''
 
 # --- FUNCIÓN DE GENERACIÓN DE PDF INSTITUCIONAL CON REPORTLAB ---
-def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
+def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -306,7 +309,8 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, op
         [Paragraph("<b>1. PROPIETARIO / ADMINISTRADO:</b>", body_style), Paragraph(prop_nombre, body_style)],
         [Paragraph("<b>2. D.N.I. / R.U.C.:</b>", body_style), Paragraph(prop_dni, body_style)],
         [Paragraph("<b>3. EXPEDIENTE / TRÁMITE:</b>", body_style), Paragraph(num_tramite, body_style)],
-        [Paragraph("<b>4. UBICACIÓN DEL PREDIO:</b>", body_style), Paragraph(ubicacion_predio, body_style)]
+        [Paragraph("<b>4. UBICACIÓN DEL PREDIO:</b>", body_style), Paragraph(ubicacion_predio, body_style)],
+        [Paragraph("<b>5. ZONIFICACIÓN / USO:</b>", body_style), Paragraph(zonificacion, body_style)]
     ]
     t_info = Table(info_data, colWidths=[150, 354])
     t_info.setStyle(TableStyle([
@@ -322,13 +326,13 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, op
     story.append(Spacer(1, 10))
     
     # Descripción del terreno
-    story.append(Paragraph("5. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
-    desc_texto = f"El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. El terreno presenta una configuración geométrica regular con linderos rectos definidos por {len(x)} vértices principales."
+    story.append(Paragraph("6. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
+    desc_texto = f"El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}, con zonificación {zonificacion}. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. El terreno presenta una configuración geométrica regular con linderos rectos definidos por {len(x)} vértices principales."
     story.append(Paragraph(desc_texto, body_style))
     story.append(Spacer(1, 6))
     
     # Cuadro de Coordenadas y Linderos
-    story.append(Paragraph(f"6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})", section_style))
+    story.append(Paragraph(f"7. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})", section_style))
     
     n = len(x)
     table_rows = [[
@@ -552,9 +556,26 @@ datos_defecto = pd.DataFrame({
     "Norte_Y": [8493435.2353, 8493431.3970, 8493419.1684, 8493423.0087]
 })
 
-# --- SECCIÓN 1: ENTRADA DE DATOS ---
+# --- SECCIÓN 1: ENTRADA DE DATOS (MANUAL O CARGA MASIVA) ---
 st.subheader("1. Coordenadas del Predio")
-st.info("💡 Edita o agrega vértices UTM. El sistema valida automáticamente la consistencia geométrica.")
+st.info("💡 Edita directamente los vértices o carga un archivo CSV/Excel con las columnas: Vértice, Este_X, Norte_Y.")
+
+archivo_subido = st.file_uploader("📂 Importar vértices desde archivo CSV o Excel", type=["csv", "xlsx"])
+
+if archivo_subido is not None:
+    try:
+        if archivo_subido.name.endswith('.csv'):
+            df_entrada = pd.read_csv(archivo_subido)
+        else:
+            df_entrada = pd.read_excel(archivo_subido)
+        
+        if all(col in df_entrada.columns for col in ["Vértice", "Este_X", "Norte_Y"]):
+            datos_defecto = df_entrada[["Vértice", "Este_X", "Norte_Y"]]
+            st.success("¡Datos cargados correctamente desde el archivo!")
+        else:
+            st.error("El archivo debe contener las columnas exactas: Vértice, Este_X, Norte_Y")
+    except Exception as e:
+        st.error(f"Error al procesar el archivo: {e}")
 
 df_coords = st.data_editor(
     datos_defecto,
@@ -660,7 +681,11 @@ if len(df_clean) >= 3:
         
     # --- GEORREFERENCIACIÓN Y TRANSFORMACIÓN CACHEADA ---
     transformer = obtener_transformador(epsg_actual)
-    lons, lats = transformer.transform(x, y)
+    if transformer:
+        lons, lats = transformer.transform(x, y)
+    else:
+        lons, lats = x, y  # Resguardo predeterminado
+        
     centroide_lat = float(np.mean(lats))
     centroide_lon = float(np.mean(lons))
     
@@ -728,7 +753,7 @@ if len(df_clean) >= 3:
     # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL (PDF REPORTLAB) ---
     st.markdown("---")
     st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
-    st.info("💡 Ingresa los datos del administrado/propietario y expediente para generar el formato institucional formal en PDF con numeración y membrete corporativo.")
+    st.info("💡 Ingresa los datos del administrado/propietario, expediente y parámetros urbanísticos para generar el formato institucional formal en PDF.")
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
@@ -738,12 +763,16 @@ if len(df_clean) >= 3:
     with col_p3:
         num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00894")
 
-    ubicacion_predio = st.text_input("📍 Ubicación del Predio (Sector, Distrito, Provincia, Departamento)", "Sector Urbano / Expansión, Abancay, Apurímac")
+    col_ub1, col_ub2 = st.columns([3, 1])
+    with col_ub1:
+        ubicacion_predio = st.text_input("📍 Ubicación del Predio (Sector, Distrito, Provincia, Departamento)", "Sector Urbano / Expansión, Abancay, Apurímac")
+    with col_ub2:
+        zonificacion = st.text_input("🏙️ Zonificación", "RDM / CZ")
 
     # Botón de Descarga del PDF Oficial generado con ReportLab
     if st.button("📥 Generar Archivo PDF Institucional"):
         pdf_bytes = generar_pdf_memoria(
-            prop_nombre, prop_dni, num_tramite, ubicacion_predio, 
+            prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, 
             opcion_zona, area_m2, area_ha, perimetro, 
             vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
         )
@@ -759,7 +788,7 @@ if len(df_clean) >= 3:
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos, planos y la memoria descriptiva.")
 
-# --- FIRMA DE AUTOR (DREW CODE) ---
+# --- FIRMA DE AUTOR (DREWCODE) ---
 st.markdown("""
     <div class="drew-footer">
         <div style="text-align: center; margin-bottom: 12px;">
