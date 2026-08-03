@@ -36,7 +36,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 4. ENCABEZADOS Y TITULARES */
+    /* 4. ENCABEZADOS Y TÍTULO PRINCIPAL CELESTE NEÓN */
     h1, h2, h3, h4, .stSubheader {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -44,10 +44,12 @@ st.markdown("""
     }
 
     .title-text {
-        font-size: 2.6rem;
+        font-size: 2.8rem;
         font-weight: 900;
-        color: #ffffff !important;
+        color: #38bdf8 !important;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.5), 0 0 40px rgba(56, 189, 248, 0.3) !important;
         margin-bottom: 0.3rem;
+        letter-spacing: 0.5px;
     }
 
     /* 5. TABLA DE EDICIÓN Y CAMPOS */
@@ -119,7 +121,7 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 8. BOTÓN DE DESCARGA KML (CORREGIDO DE FORMA DEFINITIVA) */
+    /* 8. BOTÓN DE DESCARGA KML */
     div[data-testid="stDownloadButton"] button {
         background-color: #1e293b !important;
         border: 2px solid #38bdf8 !important;
