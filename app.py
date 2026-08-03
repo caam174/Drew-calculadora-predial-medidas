@@ -4,6 +4,7 @@ import numpy as np
 from pyproj import Transformer
 import folium
 from streamlit_folium import st_folium
+import matplotlib.pyplot as plt
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
@@ -13,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES: CAJAS HIGHLIGHT Y TIPOGRAFÍA GIGANTE ---
+# --- ESTILOS VISUALES DE ALTO IMPACTO ---
 st.markdown("""
     <style>
     /* 1. FONDO PRINCIPAL */
@@ -64,7 +65,7 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    /* 6. CAJAS PERSONALIZADAS DEL RESUMEN GEOMÉTRICO (RESALTANTES) */
+    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO (TARJETAS GIGANTES DE ALTO IMPACTO) */
     .metric-box {
         background: linear-gradient(145deg, #1e293b, #0f172a) !important;
         border: 3px solid #38bdf8 !important;
@@ -156,7 +157,7 @@ st.markdown("""
 
 # --- CABECERA ---
 st.markdown('<div class="title-text">📐 Calculadora Predial UTM</div>', unsafe_allow_html=True)
-st.caption("⚡ Cálculo de superficie, perímetro y geolocalización en tiempo real (WGS-84 Zona 18S)")
+st.caption("⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84 Zona 18S)")
 
 # --- FUNCIÓN GENERADORA DE KML ---
 def generar_kml(vertices_nombres, lons, lats, area_m2, perimetro):
@@ -212,7 +213,7 @@ datos_defecto = pd.DataFrame({
 
 # --- SECCIÓN 1: ENTRADA DE DATOS ---
 st.subheader("1. Coordenadas del Predio")
-st.info("💡 Edita o pega aquí tus vértices UTM. Se ajusta automáticamente en tu celular.")
+st.info("💡 Edita o agrega vértices UTM. Si creas una fila vacía por error, el sistema la filtrará automáticamente.")
 
 df_coords = st.data_editor(
     datos_defecto,
@@ -225,25 +226,33 @@ df_coords = st.data_editor(
     }
 )
 
+# --- LIMPIEZA AUTOMÁTICA DE FILAS INCOMPLETAS O VACÍAS ---
+df_clean = df_coords.copy()
+df_clean["Este_X"] = pd.to_numeric(df_clean["Este_X"], errors="coerce")
+df_clean["Norte_Y"] = pd.to_numeric(df_clean["Norte_Y"], errors="coerce")
+df_clean = df_clean.dropna(subset=["Este_X", "Norte_Y"])
+df_clean = df_clean[df_clean["Vértice"].astype(str).str.strip() != ""]
+
 # --- MOTOR DE CÁLCULO ---
-if len(df_coords) >= 3:
-    x = df_coords["Este_X"].to_numpy()
-    y = df_coords["Norte_Y"].to_numpy()
+if len(df_clean) >= 3:
+    x = df_clean["Este_X"].to_numpy()
+    y = df_clean["Norte_Y"].to_numpy()
+    vertices_nombres = df_clean["Vértice"].astype(str).tolist()
     n = len(x)
     
-    # Algoritmo de Gauss / Shoelace
+    # Algoritmo de Gauss / Shoelace para Superficie
     suma_desc = np.sum(x * np.roll(y, -1))
     suma_asc = np.sum(y * np.roll(x, -1))
     area_m2 = abs(suma_desc - suma_asc) / 2.0
     area_ha = area_m2 / 10000.0
     
-    # Cálculo de Perímetro
+    # Cálculo de Perímetro y Distancias de Linderos
     dx = np.roll(x, -1) - x
     dy = np.roll(y, -1) - y
     distancias = np.sqrt(dx**2 + dy**2)
     perimetro = np.sum(distancias)
     
-    # --- SECCIÓN 2: RESUMEN GEOMÉTRICO (CAJAS RESALTADAS DE ALTO IMPACTO) ---
+    # --- SECCIÓN 2: RESUMEN GEOMÉTRICO (NÚMEROS GIGANTES) ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
     
@@ -273,15 +282,13 @@ if len(df_coords) >= 3:
             </div>
         """, unsafe_allow_html=True)
     
-    vertices_nombres = df_coords["Vértice"].tolist()
     lados = [f"{vertices_nombres[i]} - {vertices_nombres[(i+1)%n]}" for i in range(n)]
-    
     df_linderos = pd.DataFrame({
         "Lado": lados,
         "Distancia (m)": np.round(distancias, 3)
     })
     
-    with st.expander("🔍 Ver detalle de medidas por lindero"):
+    with st.expander("🔍 Ver detalle de medidas por lindero en tabla"):
         st.dataframe(df_linderos, use_container_width=True)
         
     # --- GEORREFERENCIACIÓN ---
@@ -291,12 +298,69 @@ if len(df_coords) >= 3:
     centroide_lat = float(np.mean(lats))
     centroide_lon = float(np.mean(lons))
     
-    # --- SECCIÓN 3: PESTAÑAS Y MAPA ---
+    # --- SECCIÓN 3: VISUALIZACIÓN & PLANO PERIMÉTRICO ---
     st.markdown("---")
     st.subheader("3. Visualización & Archivos")
     
-    tab_mapa, tab_kml = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
+    tab_plano, tab_mapa, tab_kml = st.tabs(["📐 Plano 2D (Medidas)", "🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
     
+    # TAB 1: DIBUJO DEL TERRENO EN 2D CON MEDIDAS (TIPO CAD)
+    with tab_plano:
+        fig, ax = plt.subplots(figsize=(9, 6.5), facecolor="#0f172a")
+        ax.set_facecolor("#0f172a")
+
+        # Polígono Cerrado
+        x_plot = np.append(x, x[0])
+        y_plot = np.append(y, y[0])
+
+        # Relleno y Líneas
+        ax.fill(x_plot, y_plot, color="#38bdf8", alpha=0.25)
+        ax.plot(x_plot, y_plot, color="#38bdf8", linewidth=2.5, marker="o", markersize=7, markerfacecolor="#f472b6", markeredgecolor="white")
+
+        # Anotación de Vértices y Medidas en Cada Lado
+        for i in range(n):
+            # Etiqueta de Vértice
+            ax.annotate(
+                f"  {vertices_nombres[i]}", 
+                (x[i], y[i]), 
+                color="#ffffff", 
+                fontsize=11, 
+                fontweight="bold"
+            )
+            
+            # Punto medio del tramo para colocar la medida
+            mx = (x[i] + x[(i+1)%n]) / 2
+            my = (y[i] + y[(i+1)%n]) / 2
+            dist_text = f"{distancias[i]:.2f} m"
+            
+            # Caja con el valor de la medida
+            ax.annotate(
+                dist_text, 
+                (mx, my), 
+                color="#fde047", 
+                fontsize=9.5, 
+                fontweight="bold",
+                ha='center', 
+                va='center',
+                bbox=dict(boxstyle="round,pad=0.3", fc="#1e293b", ec="#fde047", lw=1.5)
+            )
+
+        # Ajustes de cuadrícula y ejes
+        ax.grid(True, linestyle="--", alpha=0.3, color="#ffffff")
+        ax.tick_params(colors="#ffffff", labelsize=9)
+        for spine in ax.spines.values():
+            spine.set_color("#ffffff")
+            spine.set_linewidth(1)
+
+        ax.set_title("📐 Esquema Perimétrico del Terreno (Escala Real UTM)", color="#ffffff", fontsize=13, fontweight="bold", pad=15)
+        ax.set_xlabel("Este - X (m)", color="#ffffff", fontsize=10, fontweight="bold")
+        ax.set_ylabel("Norte - Y (m)", color="#ffffff", fontsize=10, fontweight="bold")
+        ax.set_aspect('equal', 'datalim') # Conserva la forma geométrica real sin deformar
+        
+        st.pyplot(fig, use_container_width=True)
+        plt.close(fig)
+
+    # TAB 2: MAPA SATELITAL CON ETIQUETAS DE MEDIDAS
     with tab_mapa:
         url_ge = f"https://earth.google.com/web/@{centroide_lat},{centroide_lon},2380a,35d,0y,0h,0t,0r"
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
@@ -324,15 +388,26 @@ if len(df_coords) >= 3:
             popup=f"Área: {area_m2:.2f} m²"
         ).add_to(m)
         
+        # Marcadores de Vértices y Distancias intermedias en el Mapa
         for i in range(n):
+            # Marcador de Vértice
             folium.Marker(
                 location=[lats[i], lons[i]],
                 popup=f"{vertices_nombres[i]}: ({x[i]:.2f}, {y[i]:.2f})",
-                icon=folium.DivIcon(html=f'<div style="font-size: 11pt; color: white; font-weight: bold; background-color: #38bdf8; padding: 3px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">{vertices_nombres[i]}</div>')
+                icon=folium.DivIcon(html=f'<div style="font-size: 10pt; color: white; font-weight: bold; background-color: #38bdf8; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">{vertices_nombres[i]}</div>')
             ).add_to(m)
             
-        st_folium(m, use_container_width=True, height=420)
+            # Marcador de Medida en el Punto Medio del Lindero
+            lat_mid = (lats[i] + lats[(i+1)%n]) / 2
+            lon_mid = (lons[i] + lons[(i+1)%n]) / 2
+            folium.Marker(
+                location=[lat_mid, lon_mid],
+                icon=folium.DivIcon(html=f'<div style="font-size: 8.5pt; color: #000; font-weight: bold; background-color: #fde047; padding: 2px 4px; border-radius: 3px; border: 1px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">{distancias[i]:.2f}m</div>')
+            ).add_to(m)
+            
+        st_folium(m, use_container_width=True, height=450)
         
+    # TAB 3: DESCARGA DE ARCHIVO KML
     with tab_kml:
         st.write("Descarga la poligonal georreferenciada para abrirla directamente en **Google Earth Pro**, **AutoCAD** o **QGIS**.")
         
@@ -347,7 +422,7 @@ if len(df_coords) >= 3:
         )
 
 else:
-    st.warning("⚠️ Ingresa al menos 3 vértices para proyectar el polígono y calcular la superficie.")
+    st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos y el plano.")
 
 # --- FIRMA DE AUTOR (DREW CODE) ---
 st.markdown("""
