@@ -50,7 +50,7 @@ st.markdown("""
         margin-bottom: 0.3rem;
     }
 
-    /* 5. TABLA DE EDICIÓN Y CAMPOS (Fondo Blanco -> Texto Negro) */
+    /* 5. TABLA DE EDICIÓN Y CAMPOS */
     div[data-testid="stDataEditor"], 
     div[role="grid"], 
     div[role="grid"] *,
@@ -93,7 +93,7 @@ st.markdown("""
         text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 7. BOTONES PERSONALIZADOS IMPERMEABLES (HTML PURO) */
+    /* 7. BOTONES PERSONALIZADOS HTML (GOOGLE EARTH / MAPS) */
     .custom-btn {
         display: block !important;
         width: 100% !important;
@@ -119,7 +119,36 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 8. PESTAÑAS (TABS) Y EXPANDER */
+    /* 8. BOTÓN DE DESCARGA KML (CORREGIDO DE FORMA DEFINITIVA) */
+    div[data-testid="stDownloadButton"] button {
+        background-color: #1e293b !important;
+        border: 2px solid #38bdf8 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+        transition: all 0.25s ease-in-out !important;
+        width: 100% !important;
+        padding: 12px 16px !important;
+    }
+
+    div[data-testid="stDownloadButton"] button p, 
+    div[data-testid="stDownloadButton"] button span,
+    div[data-testid="stDownloadButton"] button div {
+        color: #38bdf8 !important;
+        font-weight: 800 !important;
+        font-size: 1.05rem !important;
+    }
+
+    div[data-testid="stDownloadButton"] button:hover {
+        background-color: #38bdf8 !important;
+        border-color: #ffffff !important;
+    }
+
+    div[data-testid="stDownloadButton"] button:hover p, 
+    div[data-testid="stDownloadButton"] button:hover span {
+        color: #0f172a !important;
+    }
+
+    /* 9. PESTAÑAS (TABS) Y EXPANDER */
     button[data-baseweb="tab"], button[data-baseweb="tab"] * {
         color: #ffffff !important;
         font-size: 1.1rem !important;
@@ -136,7 +165,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 9. FIRMA DREW CODE Y CONTACTO */
+    /* 10. FIRMA DREW CODE Y CONTACTO */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
