@@ -50,7 +50,7 @@ st.markdown("""
         margin-bottom: 0.3rem;
     }
 
-    /* 5. TABLA DE EDICIÓN Y CAMPOS */
+    /* 5. TABLA DE EDICIÓN Y CAMPOS (Fondo Blanco -> Texto Negro) */
     div[data-testid="stDataEditor"], 
     div[role="grid"], 
     div[role="grid"] *,
@@ -93,31 +93,30 @@ st.markdown("""
         text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
     }
 
-    /* 7. ESTILO CORREGIDO PARA BOTONES DE ENLACE (GOOGLE EARTH / MAPS) */
-    a[data-testid="stLinkButton"] {
+    /* 7. BOTONES PERSONALIZADOS IMPERMEABLES (HTML PURO) */
+    .custom-btn {
+        display: block !important;
+        width: 100% !important;
+        padding: 12px 16px !important;
         background-color: #1e293b !important;
+        color: #38bdf8 !important;
         border: 2px solid #38bdf8 !important;
         border-radius: 12px !important;
         text-align: center !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    }
-
-    a[data-testid="stLinkButton"] p, 
-    a[data-testid="stLinkButton"] span, 
-    a[data-testid="stLinkButton"] div {
-        color: #38bdf8 !important;
         font-weight: 800 !important;
         font-size: 1.05rem !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+        transition: all 0.25s ease-in-out !important;
+        box-sizing: border-box !important;
+        margin-bottom: 12px !important;
     }
 
-    a[data-testid="stLinkButton"]:hover {
+    .custom-btn:hover {
         background-color: #38bdf8 !important;
-        border-color: #ffffff !important;
-    }
-
-    a[data-testid="stLinkButton"]:hover p, 
-    a[data-testid="stLinkButton"]:hover span {
         color: #0f172a !important;
+        border-color: #ffffff !important;
+        box-shadow: 0 6px 18px rgba(56, 189, 248, 0.6) !important;
     }
 
     /* 8. PESTAÑAS (TABS) Y EXPANDER */
@@ -197,7 +196,7 @@ def generar_svg_plano(x, y, vertices, distancias):
     
     svg_elements = []
     
-    # Polígono del predio
+    # Polígono base
     svg_elements.append(f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />')
     
     n = len(x)
@@ -384,7 +383,7 @@ if len(df_clean) >= 3:
     svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
     components.html(svg_plano, height=520)
         
-    # --- GEORREFERENCIACIÓN Y TRANSFRMACIÓN ---
+    # --- GEORREFERENCIACIÓN Y TRANSFORMACIÓN ---
     transformer = Transformer.from_crs("EPSG:32718", "EPSG:4326", always_xy=True)
     lons, lats = transformer.transform(x, y)
     
@@ -403,8 +402,10 @@ if len(df_clean) >= 3:
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
         
         col_link1, col_link2 = st.columns(2)
-        col_link1.link_button("🌐 Abrir en Google Earth Web", url_ge, use_container_width=True)
-        col_link2.link_button("📍 Abrir en Google Maps", url_gm, use_container_width=True)
+        with col_link1:
+            st.markdown(f'<a href="{url_ge}" target="_blank" class="custom-btn">🌐 Abrir en Google Earth Web</a>', unsafe_allow_html=True)
+        with col_link2:
+            st.markdown(f'<a href="{url_gm}" target="_blank" class="custom-btn">📍 Abrir en Google Maps</a>', unsafe_allow_html=True)
         
         m = folium.Map(
             location=[centroide_lat, centroide_lon],
