@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 from pyproj import Transformer
@@ -160,8 +161,8 @@ st.caption("⚡ Cálculo de superficie, perímetro, plano perimétrico y geoloca
 
 # --- FUNCIÓN DIBUJO VECTORIAL SVG DEL PLANO 2D ---
 def generar_svg_plano(x, y, vertices, distancias):
-    w, h = 800, 520
-    pad = 90
+    w, h = 800, 500
+    pad = 100  # Margen amplio para evitar cortes de texto
     
     min_x, max_x = np.min(x), np.max(x)
     min_y, max_y = np.min(y), np.max(y)
@@ -175,39 +176,50 @@ def generar_svg_plano(x, y, vertices, distancias):
     cy = (min_y + max_y) / 2
     
     sx = (x - cx) * scale + w / 2
-    sy = h / 2 - (y - cy) * scale  # Invertido para eje Y informático
+    sy = h / 2 - (y - cy) * scale  # Inversión de coordenadas Y
     
     pts = " ".join([f"{sx[i]:.1f},{sy[i]:.1f}" for i in range(len(x))])
     
     svg_elements = []
     
-    # Relleno del polígono
+    # Polígono base del terreno
     svg_elements.append(f'<polygon points="{pts}" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />')
     
     n = len(x)
-    # Linderos con sus medidas
+    # Linderos con medidas alineadas al tramo (Alineación CAD)
     for i in range(n):
         i_next = (i + 1) % n
         mx = (sx[i] + sx[i_next]) / 2
         my = (sy[i] + sy[i_next]) / 2
         dist_str = f"{distancias[i]:.2f} m"
         
+        # Cálculo del ángulo del lado para orientar la etiqueta
+        dx_p = sx[i_next] - sx[i]
+        dy_p = sy[i_next] - sy[i]
+        angle = np.degrees(np.arctan2(dy_p, dx_p))
+        if angle > 90:
+            angle -= 180
+        elif angle < -90:
+            angle += 180
+
         rect_w = len(dist_str) * 9.5 + 14
-        svg_elements.append(f'''
-            <g transform="translate({mx:.1f}, {my:.1f})">
-                <rect x="{-rect_w/2:.1f}" y="-13" width="{rect_w}" height="25" rx="6" fill="#1e293b" stroke="#fde047" stroke-width="1.8" />
-                <text x="0" y="4" fill="#fde047" font-size="12.5" font-weight="900" text-anchor="middle" font-family="sans-serif">{dist_str}</text>
-            </g>
-        ''')
+        svg_elements.append(
+            f'<g transform="translate({mx:.1f}, {my:.1f}) rotate({angle:.1f})">'
+            f'<rect x="{-rect_w/2:.1f}" y="-13" width="{rect_w}" height="25" rx="6" fill="#1e293b" stroke="#fde047" stroke-width="1.8" />'
+            f'<text x="0" y="4" fill="#fde047" font-size="12.5" font-weight="900" text-anchor="middle" font-family="sans-serif">{dist_str}</text>'
+            f'</g>'
+        )
         
-    # Vértices con sus etiquetas
+    # Vértices con identificadores desfasados
     for i in range(n):
+        vx = sx[i] + (16 if sx[i] >= w/2 else -26)
+        vy = sy[i] + (16 if sy[i] >= h/2 else -10)
         svg_elements.append(f'<circle cx="{sx[i]:.1f}" cy="{sy[i]:.1f}" r="7" fill="#f472b6" stroke="#ffffff" stroke-width="2.5" />')
-        svg_elements.append(f'<text x="{sx[i]+12:.1f}" y="{sy[i]-12:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.8))">{vertices[i]}</text>')
+        svg_elements.append(f'<text x="{vx:.1f}" y="{vy:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif">{vertices[i]}</text>')
         
     svg_code = f'''
-    <div style="width: 100%; text-align: center;">
-        <svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 850px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <div style="width: 100%; display: flex; justify-content: center; background-color: transparent;">
+        <svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 800px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
                     <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
@@ -365,10 +377,10 @@ if len(df_clean) >= 3:
     
     tab_plano, tab_mapa, tab_kml = st.tabs(["📐 Plano 2D (Medidas)", "🗺️ Mapa Satelital", "📥 Exportar Archivo KML"])
     
-    # TAB 1: DIBUJO VECTORIAL NATIVO SVG CON MEDIDAS
+    # TAB 1: DIBUJO VECTORIAL SVG RENDERIZADO DE FORMA AISLADA
     with tab_plano:
         svg_plano = generar_svg_plano(x, y, vertices_nombres, distancias)
-        st.markdown(svg_plano, unsafe_allow_html=True)
+        components.html(svg_plano, height=520)
 
     # TAB 2: MAPA SATELITAL CON ETIQUETAS DE MEDIDAS
     with tab_mapa:
