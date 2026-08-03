@@ -13,134 +13,135 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS VISUALES ALTO CONTRASTE (CERO GRISES) ---
+# --- ESTILOS VISUALES: BLANCO SOBRE AZUL / NEGRO SOBRE BLANCO (SIN GRISES) ---
 st.markdown("""
     <style>
-    /* Fondo principal */
+    /* 1. FONDO PRINCIPAL */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
         color: #ffffff !important;
     }
-    
-    /* ELIMINACIÓN DE TEXTO GRIS EN SUBTÍTULOS (st.caption) */
-    [data-testid="stCaptionContainer"], .stCaption {
-        color: #38bdf8 !important; /* Cyan neón brillante */
-        font-size: 1.05rem !important;
-        font-weight: 600 !important;
+
+    /* 2. REGLA GENERAL: TODO EL TEXTO EN FONDO OSCURO ES BLANCO PURO */
+    .stApp p, .stApp span, .stApp label, .stApp div, .stApp small {
+        color: #ffffff !important;
+        opacity: 1 !important;
     }
-    
-    /* ENCABEZADOS Y SUBENCABEZADOS (st.subheader) */
-    h1, h2, h3, .stSubheader, [data-testid="stMarkdownContainer"] h3 {
+
+    /* 3. CAPTIONS, NOTAS Y TEXTOS SECUNDARIOS (Blanco grande y legible) */
+    [data-testid="stCaptionContainer"], .stCaption, div[data-testid="stMarkdownContainer"] p {
+        color: #ffffff !important;
+        font-size: 1.05rem !important;
+        font-weight: 500 !important;
+        opacity: 1 !important;
+    }
+
+    /* 4. ENCABEZADOS Y TITULARES (Diferenciados por tamaño y grosor) */
+    h1, h2, h3, h4, .stSubheader {
         color: #ffffff !important;
         font-weight: 800 !important;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        letter-spacing: 0.5px;
     }
-    
-    /* TÍTULO PRINCIPAL */
+
     .title-text {
-        font-size: 2.3rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #f472b6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #ffffff !important;
+        margin-bottom: 0.3rem;
     }
-    
-    /* CAJAS DE INFORMACIÓN (st.info) */
+
+    /* 5. TABLA DE EDICIÓN Y CAMPOS DE ENTRADA (Fondo Claro -> Texto NEGRO) */
+    div[data-testid="stDataEditor"], 
+    div[role="grid"], 
+    div[role="grid"] *,
+    input, select, textarea {
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    div[role="grid"] {
+        background-color: #ffffff !important;
+        border-radius: 8px;
+    }
+
+    /* 6. CAJAS DE ALERTA E INFORMACIÓN (st.info) */
     div[data-testid="stAlert"] {
-        background-color: rgba(30, 41, 59, 0.95) !important;
-        border: 1px solid #38bdf8 !important;
+        background-color: #1e293b !important;
+        border: 2px solid #ffffff !important;
         border-radius: 12px !important;
     }
     div[data-testid="stAlert"] p {
-        color: #f8fafc !important; /* Blanco puro */
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-    }
-    
-    /* ACORDEÓN / EXPANDER */
-    details summary p {
-        color: #38bdf8 !important; /* Cyan brillante */
-        font-weight: 700 !important;
+        color: #ffffff !important;
         font-size: 1.05rem !important;
+        font-weight: 600 !important;
     }
-    
-    /* MÉTRICAS (RESULTADOS GEOMÉTRICOS) */
+
+    /* 7. TARJETAS DE MÉTRICAS (RESULTADOS) */
     div[data-testid="metric-container"] {
-        background: rgba(15, 23, 42, 0.9) !important;
-        border: 2px solid #38bdf8 !important;
-        backdrop-filter: blur(12px);
+        background: rgba(15, 23, 42, 0.95) !important;
+        border: 2px solid #ffffff !important;
         border-radius: 16px;
         padding: 18px;
-        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.25);
-        transition: transform 0.25s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     }
-    
-    div[data-testid="metric-container"]:hover {
-        transform: translateY(-4px);
-        border-color: #f472b6 !important;
-        box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
-    }
-    
-    /* Etiquetas de Métricas (Área, Perímetro) */
-    div[data-testid="stMetricLabel"] {
-        color: #7dd3fc !important; /* Celeste vivo */
+
+    div[data-testid="stMetricLabel"], div[data-testid="stMetricLabel"] * {
+        color: #ffffff !important;
         font-weight: 700 !important;
-        font-size: 1.15rem !important;
+        font-size: 1.2rem !important;
     }
-    
-    /* Valores Numéricos de Métricas */
-    div[data-testid="stMetricValue"] {
-        color: #ffffff !important; /* Blanco total */
+
+    div[data-testid="stMetricValue"], div[data-testid="stMetricValue"] * {
+        color: #38bdf8 !important; /* Azul neón para resaltar el número */
         font-weight: 900 !important;
-        font-size: 1.9rem !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        font-size: 2rem !important;
     }
-    
-    /* PESTAÑAS (TABS) */
-    button[data-baseweb="tab"] {
+
+    /* 8. PESTAÑAS (TABS) Y EXPANDER */
+    button[data-baseweb="tab"], button[data-baseweb="tab"] * {
+        color: #ffffff !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
-        color: #f1f5f9 !important; /* Blanco claro (evita gris) */
-        border-radius: 10px;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #38bdf8 !important;
-        background-color: rgba(56, 189, 248, 0.2) !important;
-        border-bottom: 2px solid #38bdf8 !important;
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-bottom: 3px solid #38bdf8 !important;
     }
-    
-    /* FOOTER (DREW CODE, CONTACTO Y NOLAN) */
+
+    details summary, details summary * {
+        color: #ffffff !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* 9. FIRMA DREW CODE Y CONTACTO */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
         padding: 24px;
-        background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%);
-        border: 2px solid #a855f7;
+        background: #0f172a;
+        border: 2px solid #ffffff;
         border-radius: 20px;
         text-align: center;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
     .drew-brand {
-        font-size: 1.5rem;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        background: linear-gradient(90deg, #38bdf8, #a855f7);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #ffffff !important;
         margin-bottom: 10px;
     }
     .drew-contact {
         color: #ffffff !important;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         font-weight: 600;
         margin-bottom: 14px;
         line-height: 1.8;
     }
     .drew-bless {
-        color: #f472b6 !important; /* Rosa brillante */
+        color: #f472b6 !important;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         margin-top: 8px;
     }
     </style>
@@ -223,13 +224,13 @@ if len(df_coords) >= 3:
     y = df_coords["Norte_Y"].to_numpy()
     n = len(x)
     
-    # Gauss / Shoelace
+    # Algoritmo de Gauss / Shoelace
     suma_desc = np.sum(x * np.roll(y, -1))
     suma_asc = np.sum(y * np.roll(x, -1))
     area_m2 = abs(suma_desc - suma_asc) / 2.0
     area_ha = area_m2 / 10000.0
     
-    # Lados y Perímetro
+    # Cálculo de Perímetro
     dx = np.roll(x, -1) - x
     dy = np.roll(y, -1) - y
     distancias = np.sqrt(dx**2 + dy**2)
@@ -320,7 +321,7 @@ if len(df_coords) >= 3:
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices para proyectar el polígono y calcular la superficie.")
 
-# --- FIRMA DE AUTOR (DREW CODE) CON DATOS DE CONTACTO Y CORAZÓN NOLAN ---
+# --- FIRMA DE AUTOR (DREW CODE) ---
 st.markdown("""
     <div class="drew-footer">
         <div style="text-align: center; margin-bottom: 12px;">
