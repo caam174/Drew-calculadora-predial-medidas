@@ -9,7 +9,7 @@ import math
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
-    page_title="Calculadora Predial UTM | Drew Code",
+    page_title="Calculadora Predial & Memoria Descriptiva | Drew Code",
     page_icon="📐",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -178,58 +178,40 @@ def generar_svg_plano(x, y, vertices, distancias):
 # --- ESTILOS VISUALES Y ADAPTABILIDAD MÓVIL (RESPONSIVE) ---
 st.markdown("""
     <style>
-    /* 1. FONDO PRINCIPAL */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
         color: #ffffff !important;
     }
-
-    /* 2. REGLA GENERAL DE TEXTO EN FONDO OSCURO */
     .stApp p, .stApp span, .stApp label, .stApp div, .stApp small {
         color: #ffffff !important;
         opacity: 1 !important;
     }
-
-    /* 3. CAPTIONS Y SUBTÍTULOS */
     [data-testid="stCaptionContainer"], .stCaption, div[data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
         font-size: 1.1rem !important;
         font-weight: 600 !important;
     }
-
-    /* 4. ENCABEZADOS Y TÍTULO PRINCIPAL CELESTE NEÓN CENTRADO */
     h1, h2, h3, h4, .stSubheader {
         color: #ffffff !important;
         font-weight: 800 !important;
-        letter-spacing: 0.5px;
     }
-
     .title-text {
         font-size: 2.8rem;
         font-weight: 900;
         color: #38bdf8 !important;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.5), 0 0 40px rgba(56, 189, 248, 0.3) !important;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.5);
         margin-bottom: 0.3rem;
-        letter-spacing: 0.5px;
         text-align: center !important;
     }
-
-    /* 5. TABLA DE EDICIÓN Y CAMPOS */
-    div[data-testid="stDataEditor"], 
-    div[role="grid"], 
-    div[role="grid"] *,
-    input, select, textarea {
+    div[data-testid="stDataEditor"], div[role="grid"], div[role="grid"] *, input, select, textarea {
         color: #000000 !important;
         font-weight: 700 !important;
         font-size: 1.05rem !important;
     }
-
     div[role="grid"] {
         background-color: #ffffff !important;
         border-radius: 8px;
     }
-
-    /* 6. CAJAS DEL RESUMEN GEOMÉTRICO */
     .metric-box {
         background: linear-gradient(145deg, #1e293b, #0f172a) !important;
         border: 3px solid #38bdf8 !important;
@@ -239,25 +221,19 @@ st.markdown("""
         box-shadow: 0 10px 25px rgba(56, 189, 248, 0.35) !important;
         margin-bottom: 15px !important;
     }
-
     .metric-title {
         color: #ffffff !important;
         font-size: 1.35rem !important;
         font-weight: 800 !important;
         margin-bottom: 8px !important;
         text-transform: uppercase;
-        letter-spacing: 1px;
     }
-
     .metric-num {
         color: #38bdf8 !important;
         font-size: 3.2rem !important;
         font-weight: 900 !important;
         line-height: 1.1 !important;
-        text-shadow: 0 0 15px rgba(56, 189, 248, 0.6) !important;
     }
-
-    /* 7. BOTONES PERSONALIZADOS HTML */
     .custom-btn {
         display: block !important;
         width: 100% !important;
@@ -275,44 +251,28 @@ st.markdown("""
         box-sizing: border-box !important;
         margin-bottom: 12px !important;
     }
-
     .custom-btn:hover {
         background-color: #38bdf8 !important;
         color: #0f172a !important;
         border-color: #ffffff !important;
-        box-shadow: 0 6px 18px rgba(56, 189, 248, 0.6) !important;
     }
-
-    /* 8. BOTÓN DE DESCARGA KML / DXF */
     div[data-testid="stDownloadButton"] button {
         background-color: #1e293b !important;
         border: 2px solid #38bdf8 !important;
         border-radius: 12px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-        transition: all 0.25s ease-in-out !important;
         width: 100% !important;
         padding: 12px 16px !important;
     }
-
-    div[data-testid="stDownloadButton"] button p, 
-    div[data-testid="stDownloadButton"] button span,
-    div[data-testid="stDownloadButton"] button div {
+    div[data-testid="stDownloadButton"] button p, div[data-testid="stDownloadButton"] button span {
         color: #38bdf8 !important;
         font-weight: 800 !important;
-        font-size: 1.05rem !important;
     }
-
     div[data-testid="stDownloadButton"] button:hover {
         background-color: #38bdf8 !important;
-        border-color: #ffffff !important;
     }
-
-    div[data-testid="stDownloadButton"] button:hover p, 
-    div[data-testid="stDownloadButton"] button:hover span {
+    div[data-testid="stDownloadButton"] button:hover p {
         color: #0f172a !important;
     }
-
-    /* 9. PESTAÑAS (TABS) Y EXPANDER */
     button[data-baseweb="tab"], button[data-baseweb="tab"] * {
         color: #ffffff !important;
         font-size: 1.1rem !important;
@@ -322,34 +282,6 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.2) !important;
         border-bottom: 4px solid #38bdf8 !important;
     }
-
-    details summary, details summary * {
-        color: #ffffff !important;
-        font-size: 1.2rem !important;
-        font-weight: 700 !important;
-    }
-
-    /* 10. ESTILOS DE ADAPTACIÓN PARA SMARTPHONES/CELULARES */
-    @media (max-width: 768px) {
-        .title-text {
-            font-size: 2.1rem !important;
-        }
-        .metric-num {
-            font-size: 2.3rem !important;
-        }
-        .metric-title {
-            font-size: 1.05rem !important;
-        }
-        .metric-box {
-            padding: 12px 8px !important;
-        }
-        .custom-btn {
-            font-size: 0.95rem !important;
-            padding: 10px 12px !important;
-        }
-    }
-
-    /* 11. FIRMA DREW CODE Y CONTACTO */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
@@ -360,40 +292,19 @@ st.markdown("""
         text-align: center;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
-    .drew-brand {
-        font-size: 1.6rem;
-        font-weight: 900;
-        color: #ffffff !important;
-        margin-bottom: 4px;
-    }
-    .drew-rights {
-        color: #cbd5e1 !important;
-        font-size: 0.95rem;
-        font-weight: 600;
-        margin-bottom: 12px;
-    }
-    .drew-contact {
-        color: #ffffff !important;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 14px;
-        line-height: 1.8;
-    }
-    .drew-bless {
-        color: #f472b6 !important;
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-top: 8px;
-    }
+    .drew-brand { font-size: 1.6rem; font-weight: 900; color: #ffffff !important; margin-bottom: 4px; }
+    .drew-rights { color: #cbd5e1 !important; font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; }
+    .drew-contact { color: #ffffff !important; font-size: 1.1rem; font-weight: 600; margin-bottom: 14px; line-height: 1.8; }
+    .drew-bless { color: #f472b6 !important; font-weight: 700; font-size: 1.1rem; margin-top: 8px; }
     </style>
 """, unsafe_allow_html=True)
 
 # --- CABECERA CENTRADA ---
-st.markdown('<div class="title-text">📐 Calculadora Predial UTM</div>', unsafe_allow_html=True)
+st.markdown('<div class="title-text">📐 Calculadora Predial & Memoria Descriptiva</div>', unsafe_allow_html=True)
 st.markdown("""
     <div style="text-align: center; margin-bottom: 25px;">
         <p style="color: #ffffff !important; font-size: 1.15rem; font-weight: 600; margin-bottom: 4px;">
-            ⚡ Cálculo de superficie, perímetro, plano perimétrico y geolocalización (WGS-84)
+            ⚡ Cálculo UTM, Cuadro Técnico, Plano 2D y Generación de Hoja Guía para Memoria Descriptiva
         </p>
     </div>
 """, unsafe_allow_html=True)
@@ -431,7 +342,7 @@ datos_defecto = pd.DataFrame({
 
 # --- SECCIÓN 1: ENTRADA DE DATOS ---
 st.subheader("1. Coordenadas del Predio")
-st.info("💡 Edita o agrega vértices UTM. Si habilitas una fila sin datos por error, el sistema la descartará automáticamente.")
+st.info("💡 Edita o agrega vértices UTM. El sistema valida automáticamente la consistencia geométrica.")
 
 df_coords = st.data_editor(
     datos_defecto,
@@ -458,22 +369,18 @@ if len(df_clean) >= 3:
     vertices_nombres = df_clean["Vértice"].astype(str).tolist()
     n = len(x)
     
-    # Validar si hay cruce de vértices
     if verificar_autointersesion(x, y):
         st.warning("⚠️ **Atención:** Se ha detectado una intersección entre linderos (polígono autointersectado). Verifica el orden secuencial de los vértices.")
 
-    # Algoritmo de Gauss / Shoelace
     suma_desc = np.sum(x * np.roll(y, -1))
     suma_asc = np.sum(y * np.roll(x, -1))
     area_m2 = abs(suma_desc - suma_asc) / 2.0
     area_ha = area_m2 / 10000.0
     
-    # Factor de elevación si se define altitud
     r_tierra = 6371000.0
     k_elev = r_tierra / (r_tierra + altitud_msnm) if altitud_msnm > 0 else 1.0
     area_terreno_m2 = area_m2 / (k_elev ** 2)
     
-    # Perímetro, Distancias y Azimuts
     dx = np.roll(x, -1) - x
     dy = np.roll(y, -1) - y
     distancias = np.sqrt(dx**2 + dy**2)
@@ -481,54 +388,57 @@ if len(df_clean) >= 3:
     
     azimuts_dms = []
     azimuts_deg = []
+    rumbos_text = []
+    
     for i in range(n):
         az_d, az_str = calcular_azimut(dx[i], dy[i])
         azimuts_deg.append(az_d)
         azimuts_dms.append(az_str)
+        
+        # Cálculo de rumbos para la memoria descriptiva
+        dx_val = dx[i]
+        dy_val = dy[i]
+        val_ang = math.degrees(math.atan2(abs(dx_val), abs(dy_val)))
+        d_r = int(val_ang)
+        m_r = int((val_ang - d_r) * 60)
+        s_r = ((val_ang - d_r) * 60 - m_r) * 60
+        ang_str = f"{d_r}°{m_r}'{s_r:.2f}\""
+        
+        if dx_val >= 0 and dy_val >= 0:
+            rumbos_text.append(f"N {ang_str} E")
+        elif dx_val >= 0 and dy_val < 0:
+            rumbos_text.append(f"S {ang_str} E")
+        elif dx_val < 0 and dy_val < 0:
+            rumbos_text.append(f"S {ang_str} W")
+        else:
+            rumbos_text.append(f"N {ang_str} W")
 
     # --- SECCIÓN 2: RESUMEN GEOMÉTRICO ---
     st.markdown("---")
     st.subheader("2. Resumen Geométrico")
     
     col1, col2, col3 = st.columns(3)
-    
     with col1:
-        st.markdown(f"""
-            <div class="metric-box">
-                <div class="metric-title">📐 Área Plana UTM</div>
-                <div class="metric-num">{area_m2:,.2f} m²</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown(f'<div class="metric-box"><div class="metric-title">📐 Área Plana UTM</div><div class="metric-num">{area_m2:,.2f} m²</div></div>', unsafe_allow_html=True)
     with col2:
-        st.markdown(f"""
-            <div class="metric-box">
-                <div class="metric-title">🌾 Hectáreas</div>
-                <div class="metric-num">{area_ha:,.4f} ha</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown(f'<div class="metric-box"><div class="metric-title">🌾 Hectáreas</div><div class="metric-num">{area_ha:,.4f} ha</div></div>', unsafe_allow_html=True)
     with col3:
-        st.markdown(f"""
-            <div class="metric-box">
-                <div class="metric-title">📏 Perímetro Total</div>
-                <div class="metric-num">{perimetro:,.2f} m</div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-title">📏 Perímetro Total</div><div class="metric-num">{perimetro:,.2f} m</div></div>', unsafe_allow_html=True)
     
     if altitud_msnm > 0:
-        st.info(f"⛰️ **Proyección de Superficie Real:** Para una altitud media de **{altitud_msnm:,.0f} m.s.n.m.** (Factor de elevación $K_{{elev}}$: `{k_elev:.6f}`), el Área en Terreno proyectada es **{area_terreno_m2:,.2f} m²**.")
+        st.info(f"⛰️ **Proyección de Superficie Real:** Para una altitud media de **{altitud_msnm:,.0f} m.s.n.m.**, el Área en Terreno proyectada es **{area_terreno_m2:,.2f} m²**.")
 
     lados = [f"{vertices_nombres[i]} - {vertices_nombres[(i+1)%n]}" for i in range(n)]
     df_linderos = pd.DataFrame({
         "Lado": lados,
+        "Rumbo": rumbos_text,
         "Distancia (m)": np.round(distancias, 3),
-        "Azimut (DD°MM'SS\")": azimuts_dms,
-        "Este Inicial (X)": np.round(x, 4),
-        "Norte Inicial (Y)": np.round(y, 4)
+        "Azimut": azimuts_dms,
+        "Este (X)": np.round(x, 4),
+        "Norte (Y)": np.round(y, 4)
     })
     
-    with st.expander("🔍 Ver Cuadro Técnico Oficial (Azimuts y Linderos)"):
+    with st.expander("🔍 Ver Cuadro Técnico Oficial (Linderos, Rumbos, Azimuts y Coordenadas)"):
         st.dataframe(df_linderos, use_container_width=True)
 
     # --- SECCIÓN 3: PLANO 2D PERIMÉTRICO ---
@@ -540,7 +450,6 @@ if len(df_clean) >= 3:
     # --- GEORREFERENCIACIÓN Y TRANSFORMACIÓN CACHEADA ---
     transformer = obtener_transformador(epsg_actual)
     lons, lats = transformer.transform(x, y)
-    
     centroide_lat = float(np.mean(lats))
     centroide_lon = float(np.mean(lons))
     
@@ -550,7 +459,6 @@ if len(df_clean) >= 3:
     
     tab_mapa, tab_kml, tab_dxf = st.tabs(["🗺️ Mapa Satelital", "📥 Exportar KML (Google Earth)", "📐 Exportar DXF (AutoCAD)"])
 
-    # TAB MAPA SATELITAL (FORMATO CUADRADO TIPO BLACKBERRY PASSPORT 1:1)
     with tab_mapa:
         url_ge = f"https://earth.google.com/web/@{centroide_lat},{centroide_lon},2380a,35d,0y,0h,0t,0r"
         url_gm = f"https://www.google.com/maps?q={centroide_lat},{centroide_lon}"
@@ -584,49 +492,165 @@ if len(df_clean) >= 3:
             folium.Marker(
                 location=[lats[i], lons[i]],
                 popup=f"{vertices_nombres[i]}: ({x[i]:.2f}, {y[i]:.2f})",
-                icon=folium.DivIcon(html=f'<div style="font-size: 10pt; color: white; font-weight: bold; background-color: #38bdf8; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">{vertices_nombres[i]}</div>')
+                icon=folium.DivIcon(html=f'<div style="font-size: 10pt; color: white; font-weight: bold; background-color: #38bdf8; padding: 2px 6px; border-radius: 4px;">{vertices_nombres[i]}</div>')
             ).add_to(m)
             
             lat_mid = (lats[i] + lats[(i+1)%n]) / 2
             lon_mid = (lons[i] + lons[(i+1)%n]) / 2
             folium.Marker(
                 location=[lat_mid, lon_mid],
-                icon=folium.DivIcon(html=f'<div style="font-size: 8.5pt; color: #000; font-weight: bold; background-color: #fde047; padding: 2px 4px; border-radius: 3px; border: 1px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">{distancias[i]:.2f}m</div>')
+                icon=folium.DivIcon(html=f'<div style="font-size: 8.5pt; color: #000; font-weight: bold; background-color: #fde047; padding: 2px 4px; border-radius: 3px; border: 1px solid #000;">{distancias[i]:.2f}m</div>')
             ).add_to(m)
             
-        # RENDERIZADO DIRECTO DEL MAPA CUADRADO SIN CONTENEDORES EXTRA
         st_folium(m, use_container_width=True, height=520)
         
-    # TAB DESCARGA KML
     with tab_kml:
-        st.write("Descarga la poligonal georreferenciada para abrirla en **Google Earth Pro**, **Global Mapper** o **QGIS**.")
+        st.write("Descarga la poligonal georreferenciada para abrirla en **Google Earth Pro** o **QGIS**.")
         kml_data = generar_kml(vertices_nombres, lons, lats, area_m2, perimetro)
-        
-        st.download_button(
-            label="🚀 Descargar archivo Predio.kml",
-            data=kml_data,
-            file_name="predio_utm.kml",
-            mime="application/vnd.google-earth.kml+xml",
-            use_container_width=True
-        )
+        st.download_button(label="🚀 Descargar archivo Predio.kml", data=kml_data, file_name="predio_utm.kml", mime="application/vnd.google-earth.kml+xml", use_container_width=True)
 
-    # TAB DESCARGA DXF (AUTOCAD)
     with tab_dxf:
-        st.write("Descarga la poligonal vectorial directa en **formato `.DXF`** para abrir en AutoCAD, Civil 3D o software CAD.")
+        st.write("Descarga la poligonal vectorial directa en **formato `.DXF`** para AutoCAD o Civil 3D.")
         dxf_data = generar_dxf(vertices_nombres, x, y)
-        
-        st.download_button(
-            label="✏️ Descargar plano en formato AutoCAD (.DXF)",
-            data=dxf_data,
-            file_name="plano_perimetrico_utm.dxf",
-            mime="application/dxf",
-            use_container_width=True
-        )
+        st.download_button(label="✏️ Descargar plano en formato AutoCAD (.DXF)", data=dxf_data, file_name="plano_perimetrico_utm.dxf", mime="application/dxf", use_container_width=True)
+
+    # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL ---
+    st.markdown("---")
+    st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
+    st.info("💡 Ingresa los datos del administrado/propietario y expediente para generar el formato institucional listo para imprimir y exportar como PDF.")
+
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        prop_nombre = st.text_input("👤 Nombres y Apellidos del Propietario", "Christian Andrew Aguilar Mamani")
+    with col_p2:
+        prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "44556677")
+    with col_p3:
+        num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00894")
+
+    ubicacion_predio = st.text_input("📍 Ubicación del Predio (Sector, Distrito, Provincia, Departamento)", "Sector Urbano / Expansión, Abancay, Apurímac")
+
+    # Generación de la Memoria Descriptiva formateada para impresión institucional
+    filas_tabla_html = ""
+    for i in range(n):
+        i_sig = (i + 1) % n
+        filas_tabla_html += f"""
+        <tr>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{vertices_nombres[i]} - {vertices_nombres[i_sig]}</td>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{rumbos_text[i]}</td>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{distancias[i]:.2f}</td>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{azimuts_dms[i]}</td>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{x[i]:.4f}</td>
+            <td style="border: 1px solid #334155; padding: 6px; text-align: center;">{y[i]:.4f}</td>
+        </tr>
+        """
+
+    html_memoria = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                color: #0f172a;
+                background-color: #ffffff;
+                margin: 0;
+                padding: 20px;
+                line-height: 1.5;
+            }}
+            .report-container {{
+                max-width: 800px;
+                margin: 0 auto;
+                background: #ffffff;
+                padding: 30px;
+                border: 2px solid #cbd5e1;
+                border-radius: 8px;
+            }}
+            h1 {{ text-align: center; font-size: 20px; color: #1e293b; text-transform: uppercase; margin-bottom: 5px; }}
+            h2 {{ text-align: center; font-size: 14px; color: #64748b; margin-bottom: 25px; }}
+            h3 {{ font-size: 14px; color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 4px; margin-top: 20px; }}
+            p {{ font-size: 12px; text-align: justify; color: #334155; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }}
+            th {{ background-color: #f1f5f9; border: 1px solid #334155; padding: 6px; color: #0f172a; text-align: center; }}
+            td {{ color: #1e293b; }}
+            .info-box {{ background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; font-size: 12px; }}
+            .print-btn {{
+                display: block; width: 100%; padding: 14px; background-color: #0284c7; color: #ffffff;
+                text-align: center; font-weight: bold; font-size: 15px; border: none; border-radius: 8px;
+                cursor: pointer; margin-bottom: 25px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            }}
+            .print-btn:hover {{ background-color: #0369a1; }}
+            @media print {{
+                .print-btn {{ display: none; }}
+                body {{ padding: 0; background: #ffffff; }}
+                .report-container {{ border: none; padding: 0; box-shadow: none; max-width: 100%; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="report-container">
+            <button class="print-btn" onclick="window.print()">🖨️ IMPRIMIR / GUARDAR COMO PDF (HOJA GUÍA)</button>
+            
+            <h1>MEMORIA DESCRIPTIVA TÉCNICA</h1>
+            <h2>SANEAMIENTO FÍSICO LEGAL Y CATASTRAL - DATOS UTM ({opcion_zona})</h2>
+            
+            <div class="info-box">
+                <b>1. PROPIETARIO / ADMINISTRADO:</b> {prop_nombre}<br>
+                <b>2. D.N.I. / R.U.C.:</b> {prop_dni}<br>
+                <b>3. EXPEDIENTE / TRÁMITE:</b> {num_tramite}<br>
+                <b>4. UBICACIÓN DEL PREDIO:</b> {ubicacion_predio}
+            </div>
+
+            <h3>5. DESCRIPCIÓN DEL TERRENO Y LINDEROS</h3>
+            <p>
+                El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}. 
+                Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. 
+                El terreno presenta una configuración geométrica regular con linderos rectos definidos por {n} vértices principales.
+            </p>
+
+            <h3>6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>LADO</th>
+                        <th>RUMBO</th>
+                        <th>DISTANCIA (m)</th>
+                        <th>AZIMUT</th>
+                        <th>ESTE (X)</th>
+                        <th>NORTE (Y)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {filas_tabla_html}
+                </tbody>
+            </table>
+            <p style="margin-top: 6px; text-align: right; font-weight: bold;">Área Total: {area_m2:,.2f} m² | Perímetro Total: {perimetro:,.2f} m</p>
+
+            <h3>7. VISUALIZACIÓN GRÁFICA (PLANO PERIMÉTRICO 2D)</h3>
+            <div style="text-align: center; margin-top: 10px;">
+                {svg_plano}
+            </div>
+
+            <div style="margin-top: 50px; display: flex; justify-content: space-around; text-align: center; font-size: 11px;">
+                <div style="border-top: 1px solid #334155; width: 220px; padding-top: 5px;">
+                    <b>{prop_nombre}</b><br>Propietario / Administrado<br>DNI: {prop_dni}
+                </div>
+                <div style="border-top: 1px solid #334155; width: 220px; padding-top: 5px;">
+                    <b>Especialista / Fiscalizador</b><br>Área Técnica - Municipalidad
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    st.markdown("### Vista Previa de la Hoja Guía Oficial:")
+    components.html(html_memoria, height=850, scrolling=True)
 
 else:
-    st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos y el plano.")
+    st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos, planos y la memoria descriptiva.")
 
-# --- FIRMA DE AUTOR (DREW CODE) Y DERECHOS RESERVADOS ---
+# --- FIRMA DE AUTOR (DREW CODE) ---
 st.markdown("""
     <div class="drew-footer">
         <div style="text-align: center; margin-bottom: 12px;">
