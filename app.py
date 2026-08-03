@@ -37,9 +37,9 @@ st.markdown("""
         margin-bottom: 0.2rem;
     }
     
-    /* CORRECCIÓN DE CONTRASTE EN LAS MÉTRICAS (RESULTADOS) */
+    /* MÉTRICAS (RESULTADOS) */
     div[data-testid="metric-container"] {
-        background: rgba(15, 23, 42, 0.75) !important;
+        background: rgba(15, 23, 42, 0.85) !important;
         border: 2px solid #38bdf8 !important;
         backdrop-filter: blur(12px);
         border-radius: 16px;
@@ -54,16 +54,16 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(244, 114, 182, 0.3);
     }
     
-    /* Etiquetas de la métrica (Área, Perímetro, etc.) */
+    /* Etiquetas de la métrica */
     div[data-testid="stMetricLabel"] {
-        color: #7dd3fc !important; /* Azul celeste brillante */
+        color: #7dd3fc !important;
         font-weight: 700 !important;
         font-size: 1.1rem !important;
     }
     
-    /* Valores de la métrica (Números gigantes) */
+    /* Valores numéricos */
     div[data-testid="stMetricValue"] {
-        color: #ffffff !important; /* Blanco radiante */
+        color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 1.8rem !important;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
@@ -81,12 +81,12 @@ st.markdown("""
         border-bottom: 2px solid #38bdf8 !important;
     }
     
-    /* Footer con Firma Drew Code y Corazón Nolan */
+    /* Footer con Firma Drew Code, Datos de Contacto y Corazón Nolan */
     .drew-footer {
         margin-top: 50px;
         margin-bottom: 20px;
         padding: 24px;
-        background: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
         border: 2px solid #a855f7;
         border-radius: 20px;
         text-align: center;
@@ -94,24 +94,26 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(168, 85, 247, 0.25);
     }
     .drew-brand {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 800;
         letter-spacing: 0.5px;
         background: linear-gradient(90deg, #38bdf8, #a855f7);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 6px;
+        margin-bottom: 10px;
     }
     .drew-contact {
-        color: #e2e8f0;
-        font-size: 1rem;
+        color: #f1f5f9;
+        font-size: 1.05rem;
         font-weight: 500;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
+        line-height: 1.8;
     }
     .drew-bless {
         color: #f472b6;
         font-weight: 600;
-        font-size: 1rem;
+        font-size: 1.05rem;
+        margin-top: 8px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -290,7 +292,7 @@ if len(df_coords) >= 3:
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices para proyectar el polígono y calcular la superficie.")
 
-# --- FIRMA DE AUTOR (DREW CODE) & CORAZÓN NOLAN ---
+# --- FIRMA DE AUTOR (DREW CODE) CON DATOS DE CONTACTO Y CORAZÓN NOLAN ---
 st.markdown("""
     <div class="drew-footer">
         <div style="text-align: center; margin-bottom: 12px;">
@@ -306,7 +308,10 @@ st.markdown("""
             </svg>
         </div>
         <div class="drew-brand">🚀 Creado por Drew Code</div>
-        <div class="drew-contact">📱 ¿Consultas o nuevos desarrollos? Cualquier cosa llamar o escribir con toda confianza.</div>
+        <div class="drew-contact">
+            📧 <b>Email:</b> <a href="mailto:caam174@gmail.com" style="color: #38bdf8; text-decoration: none;">caam174@gmail.com</a> <br>
+            📱 <b>WhatsApp / Llama al:</b> <a href="https://wa.me/51983761229" target="_blank" style="color: #4ade80; text-decoration: none; font-weight: bold;">+51 983761229</a>
+        </div>
         <div class="drew-bless">✨ Ten un buen día, y si te ayudó me alegra mucho. ¡Que Dios te cuide siempre! 🙏🏼</div>
     </div>
 """, unsafe_allow_html=True)
