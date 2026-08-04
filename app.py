@@ -1,12 +1,12 @@
 import io
-import streamlit as st
-import streamlit.components.v1 as components
+import math
 import pandas as pd
 import numpy as np
-from pyproj import Transformer
+import streamlit as st
+import streamlit.components.v1 as components
 import folium
 from streamlit_folium import st_folium
-import math
+from pyproj import Transformer
 
 # --- IMPORTACIONES REPORTLAB (PDF INSTITUCIONAL) ---
 from reportlab.lib import colors
@@ -769,21 +769,20 @@ if len(df_clean) >= 3:
     with col_ub2:
         zonificacion = st.text_input("🏙️ Zonificación", "RDM / CZ")
 
-    # Botón de Descarga del PDF Oficial generado con ReportLab
-    if st.button("📥 Generar Archivo PDF Institucional"):
-        pdf_bytes = generar_pdf_memoria(
-            prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, 
-            opcion_zona, area_m2, area_ha, perimetro, 
-            vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
-        )
-        st.success("¡Memoria Descriptiva y Hoja Guía generada correctamente bajo estándares normativos!")
-        st.download_button(
-            label="💾 Descargar Memoria Descriptiva en PDF",
-            data=pdf_bytes,
-            file_name=f"{num_tramite.replace('/', '_')}_memoria_descriptiva.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
+    # Generación e inserción directa del botón de descarga (un solo clic)
+    pdf_bytes = generar_pdf_memoria(
+        prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, 
+        opcion_zona, area_m2, area_ha, perimetro, 
+        vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
+    )
+
+    st.download_button(
+        label="💾 Descargar Memoria Descriptiva en PDF",
+        data=pdf_bytes,
+        file_name=f"{num_tramite.replace('/', '_')}_memoria_descriptiva.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
 
 else:
     st.warning("⚠️ Ingresa al menos 3 vértices válidos con coordenadas Este (X) y Norte (Y) para generar los cálculos, planos y la memoria descriptiva.")
