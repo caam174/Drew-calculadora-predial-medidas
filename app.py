@@ -757,9 +757,9 @@ if len(df_clean) >= 3:
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        prop_nombre = st.text_input("👤 Nombres y Apellidos del Propietario", "Christian Andrew Aguilar Mamani")
+        prop_nombre = st.text_input("👤 Nombres y Apellidos del Propietario", "Maximo Decimo Meridio")
     with col_p2:
-        prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "44556677")
+        prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "26247302")
     with col_p3:
         num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00894")
 
