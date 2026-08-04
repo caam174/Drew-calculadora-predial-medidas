@@ -228,8 +228,8 @@ def generar_svg_plano(x, y, vertices, distancias):
     </div>
     '''
 
-# --- FUNCIÓN DE GENERACIÓN DE PDF INSTITUCIONAL CON REPORTLAB ---
-def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
+# --- FUNCIÓN DE GENERACIÓN DE PDF INSTITUCIONAL EXPANDIDO CON REPORTLAB ---
+def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, distrito, zonificacion, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -259,7 +259,7 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zo
         fontSize=10,
         leading=13,
         textColor=colors.HexColor('#64748B'),
-        spaceAfter=15,
+        spaceAfter=12,
         alignment=1
     )
     
@@ -269,15 +269,15 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zo
         fontSize=10,
         leading=14,
         textColor=colors.HexColor('#0284C7'),
-        spaceBefore=12,
+        spaceBefore=10,
         spaceAfter=6
     )
     
     body_style = ParagraphStyle(
         'BodyDark',
         parent=styles['Normal'],
-        fontSize=9,
-        leading=13,
+        fontSize=8.5,
+        leading=12,
         textColor=colors.HexColor('#334155')
     )
     
@@ -304,35 +304,44 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zo
     story.append(Paragraph("MEMORIA DESCRIPTIVA TÉCNICA OFICIAL", title_style))
     story.append(Paragraph(f"SANEAMIENTO FÍSICO LEGAL Y CATASTRAL - DATOS UTM ({opcion_zona})", subtitle_style))
     
-    # Cuadro de Datos Generales
+    # Cuadro de Datos Generales y Geográficos Completos
     info_data = [
         [Paragraph("<b>1. PROPIETARIO / ADMINISTRADO:</b>", body_style), Paragraph(prop_nombre, body_style)],
-        [Paragraph("<b>2. D.N.I. / R.U.C.:</b>", body_style), Paragraph(prop_dni, body_style)],
+        [Paragraph("<b>   D.N.I. / R.U.C.:</b>", body_style), Paragraph(prop_dni, body_style)],
+        [Paragraph("<b>2. PROYECTO:</b>", body_style), Paragraph(proyecto_nombre, body_style)],
         [Paragraph("<b>3. EXPEDIENTE / TRÁMITE:</b>", body_style), Paragraph(num_tramite, body_style)],
-        [Paragraph("<b>4. UBICACIÓN DEL PREDIO:</b>", body_style), Paragraph(ubicacion_predio, body_style)],
+        [Paragraph("<b>4. UBICACIÓN CATASTRAL Y GEODÉSICA:</b>", body_style), Paragraph("", body_style)],
+        [Paragraph("   - Código UBIGEO:", body_style), Paragraph(ubigeo_code, body_style)],
+        [Paragraph("   - Datum / Sistema Referencial:", body_style), Paragraph(datum_origen, body_style)],
+        [Paragraph("   - Origen de Datos:", body_style), Paragraph(origen_gps, body_style)],
+        [Paragraph("   - Zona UTM:", body_style), Paragraph(opcion_zona, body_style)],
+        [Paragraph("   - Nombre del Predio:", body_style), Paragraph(predio_nombre, body_style)],
+        [Paragraph("   - Valle / Sector:", body_style), Paragraph(f"{valle_nombre} / {sector_nombre}", body_style)],
+        [Paragraph("   - Distrito / Provincia / Dpto:", body_style), Paragraph(f"{distrito} / {provincia} / {departamento}", body_style)],
         [Paragraph("<b>5. ZONIFICACIÓN / USO:</b>", body_style), Paragraph(zonificacion, body_style)]
     ]
-    t_info = Table(info_data, colWidths=[150, 354])
+    
+    t_info = Table(info_data, colWidths=[170, 334])
     t_info.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
         ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E2E8F0')),
-        ('TOPPADDING', (0,0), (-1,-1), 5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
     ]))
     story.append(t_info)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 8))
     
     # Descripción del terreno
-    story.append(Paragraph("6. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
-    desc_texto = f"El predio materia de la presente memoria descriptiva se encuentra ubicado en {ubicacion_predio}, con zonificación {zonificacion}. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>. El terreno presenta una configuración geométrica regular con linderos rectos definidos por {len(x)} vértices principales."
+    story.append(Paragraph("5. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
+    desc_texto = f"El predio denominado <b>{predio_nombre}</b>, materia de la presente memoria descriptiva, se ubica en el Sector <b>{sector_nombre}</b>, Valle <b>{valle_nombre}</b>, Distrito de <b>{distrito}</b>, Provincia de <b>{provincia}</b>, Departamento de <b>{departamento}</b>, con zonificación <b>{zonificacion}</b>. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>, definido geométricamente por {len(x)} vértices principales."
     story.append(Paragraph(desc_texto, body_style))
     story.append(Spacer(1, 6))
     
     # Cuadro de Coordenadas y Linderos
-    story.append(Paragraph(f"7. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM (WGS84 - {opcion_zona})", section_style))
+    story.append(Paragraph(f"6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM ({datum_origen} - {opcion_zona})", section_style))
     
     n = len(x)
     table_rows = [[
@@ -369,7 +378,7 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, ubicacion_predio, zo
     
     resumen_totales = Paragraph(f"<b>Área Total: {area_m2:,.2f} m² | Perímetro Total: {perimetro:,.2f} m</b>", ParagraphStyle('TotalRight', parent=styles['Normal'], fontSize=8.5, alignment=2, spaceBefore=4, textColor=colors.HexColor('#0F172A')))
     story.append(resumen_totales)
-    story.append(Spacer(1, 15))
+    story.append(Spacer(1, 12))
     
     # Bloque de Firmas
     firmas_data = [
@@ -753,7 +762,7 @@ if len(df_clean) >= 3:
     # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL (PDF REPORTLAB) ---
     st.markdown("---")
     st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
-    st.info("💡 Ingresa los datos del administrado/propietario, expediente y parámetros urbanísticos para generar el formato institucional formal en PDF.")
+    st.info("💡 Ingresa los datos completos del propietario, expediente y parámetros geográficos para generar el PDF institucional.")
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
@@ -761,23 +770,48 @@ if len(df_clean) >= 3:
     with col_p2:
         prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "26247302")
     with col_p3:
-        num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00XXX")
+        num_tramite = st.text_input("📁 N° de Trámite / Expediente", "EXP-2026-00894")
 
-    col_ub1, col_ub2 = st.columns([3, 1])
+    col_pr1, col_pr2, col_pr3 = st.columns(3)
+    with col_pr1:
+        proyecto_nombre = st.text_input("🏗️ Proyecto", "UBICACIÓN, PERIMÉTRICO Y LOCALIZACIÓN")
+    with col_pr2:
+        ubigeo_code = st.text_input("🔢 Código UBIGEO", "030109")
+    with col_pr3:
+        datum_origen = st.text_input("🌍 Datum", "WGS84")
+
+    col_geo1, col_geo2, col_geo3 = st.columns(3)
+    with col_geo1:
+        origen_gps = st.text_input("📡 Origen de Datos", "GPS CATASTRAL / TOPOGRÁFICO")
+    with col_geo2:
+        predio_nombre = st.text_input("🏡 Nombre del Predio", "KARONTE")
+    with col_geo3:
+        valle_nombre = st.text_input("🌾 Valle", "KOLKAQUE")
+
+    col_ub1, col_ub2, col_ub3, col_ub4 = st.columns(4)
     with col_ub1:
-        ubicacion_predio = st.text_input("📍 Ubicación del Predio (Sector, Distrito, Provincia, Departamento)", "Sector Urbano / Expansión, Abancay, Apurímac")
+        sector_nombre = st.text_input("📍 Sector", "AYCHAHUACSO")
     with col_ub2:
-        zonificacion = st.text_input("🏙️ Zonificación", "RDM / CZ")
+        distrito = st.text_input("🏙️ Distrito", "TAMBURCO")
+    with col_ub3:
+        provincia = st.text_input("🏛️ Provincia", "ABANCAY")
+    with col_ub4:
+        departamento = st.text_input("🗺️ Departamento", "APURIMAC")
 
-    # Generación e inserción directa del botón de descarga (un solo clic)
+    col_z1, col_z2 = st.columns([1, 1])
+    with col_z1:
+        zonificacion = st.text_input("📋 Zonificación / Uso", "RDM / CZ")
+
+    # Generación directa de bytes y botón de descarga (un solo clic)
     pdf_bytes = generar_pdf_memoria(
-        prop_nombre, prop_dni, num_tramite, ubicacion_predio, zonificacion, 
-        opcion_zona, area_m2, area_ha, perimetro, 
+        prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, 
+        origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, 
+        distrito, zonificacion, opcion_zona, area_m2, area_ha, perimetro, 
         vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
     )
 
     st.download_button(
-        label="💾 Descargar Memoria Descriptiva en PDF",
+        label="💾 Descargar Memoria Descriptiva Completa en PDF",
         data=pdf_bytes,
         file_name=f"{num_tramite.replace('/', '_')}_memoria_descriptiva.pdf",
         mime="application/pdf",
