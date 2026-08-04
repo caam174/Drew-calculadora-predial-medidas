@@ -784,7 +784,7 @@ if len(df_clean) >= 3:
     with col_geo1:
         origen_gps = st.text_input("📡 Origen de Datos", "GPS CATASTRAL / TOPOGRÁFICO")
     with col_geo2:
-        predio_nombre = st.text_input("🏡 Nombre del Predio", "KARONTE")
+        predio_nombre = st.text_input("🏡 Nombre del Predio", "PARADISO")
     with col_geo3:
         valle_nombre = st.text_input("🌾 Valle", "KOLKAQUE")
 
