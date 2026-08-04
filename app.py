@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CANVAS PERSONALIZADO PARA NUMERACIÓN Y MARCA DE AGUA ---
+# --- CANVAS PERSONALIZADO PARA NUMERACIÓN Y MARCA DE AGUA ROJA TENUE ---
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,14 +43,18 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_elements(self, page_count):
         self.saveState()
-        self.setFont('Helvetica-Bold', 50)
-        self.setFillColor(colors.HexColor('#CCCCCC'), alpha=0.10)
+        
+        # 1. Marca de agua diagonal en rojo tenue
+        self.setFont('Helvetica-Bold', 38)
+        self.setFillColor(colors.HexColor('#DC2626'), alpha=0.12)
         self.saveState()
-        self.translate(300, 400)
+        self.translate(300, 390)
         self.rotate(45)
-        self.drawCentredString(0, 0, "USO OFICIAL 2026")
+        self.drawCentredString(0, 20, "SIN VALOR LEGAL")
+        self.drawCentredString(0, -25, "Ver. 01-2026")
         self.restoreState()
         
+        # 2. Pie de página institucional
         self.setFont('Helvetica', 8)
         self.setFillColor(colors.HexColor('#444444'))
         self.drawString(54, 30, "Elaborado por: Área Técnica & Saneamiento | Drew Code")
@@ -266,17 +270,14 @@ def generar_svg_plano(x, y, vertices, distancias):
         svg_elements.append(f'<text x="{vx:.1f}" y="{vy:.1f}" fill="#ffffff" font-size="15" font-weight="900" font-family="sans-serif">{vertices[i]}</text>')
     return f'<div style="width: 100%; display: flex; justify-content: center; background-color: transparent;"><svg viewBox="0 0 {w} {h}" style="width: 100%; max-width: 800px; height: auto; background-color: #0f172a; border-radius: 16px; border: 2.5px solid #38bdf8; box-shadow: 0 10px 25px rgba(0,0,0,0.5);"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)" />{"".join(svg_elements)}</svg></div>'
 
-# --- ESTILOS VISUALES CSS CORREGIDOS ---
+# --- ESTILOS VISUALES CSS ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); color: #ffffff !important; }
-    
-    /* Reglas generales para la app */
     .stApp p, .stApp label, .stApp small { color: #ffffff !important; }
     h1, h2, h3, h4, .stSubheader { color: #ffffff !important; font-weight: 800 !important; }
     .title-text { font-size: 2.8rem; font-weight: 900; color: #38bdf8 !important; text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.5); margin-bottom: 0.3rem; text-align: center !important; }
 
-    /* Corrección de inputs, selects y data editor */
     div[data-testid="stDataEditor"], div[role="grid"], div[role="grid"] *, input, select, textarea {
         color: #000000 !important;
         font-weight: 700 !important;
@@ -284,13 +285,11 @@ st.markdown("""
     }
     div[role="grid"] { background-color: #ffffff !important; border-radius: 8px; }
 
-    /* Corrección explícita de botones de formulario y botones estándar */
     button, button *, button p, button span, div[data-testid="stFormSubmitButton"] button *, section[data-testid="stFileUploader"] * {
         color: #0f172a !important;
         font-weight: 800 !important;
     }
 
-    /* Estilos para el File Uploader */
     section[data-testid="stFileUploader"] {
         background-color: #f8fafc !important;
         border-radius: 12px;
@@ -301,22 +300,18 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Cajas métricas */
     .metric-box { background: linear-gradient(145deg, #1e293b, #0f172a) !important; border: 3px solid #38bdf8 !important; border-radius: 18px !important; padding: 20px 15px !important; text-align: center !important; box-shadow: 0 10px 25px rgba(56, 189, 248, 0.35) !important; margin-bottom: 15px !important; }
     .metric-title { color: #ffffff !important; font-size: 1.35rem !important; font-weight: 800 !important; margin-bottom: 8px !important; text-transform: uppercase; }
     .metric-num { color: #38bdf8 !important; font-size: 3.2rem !important; font-weight: 900 !important; line-height: 1.1 !important; }
 
-    /* Botones de enlaces externos */
     .custom-btn { display: block !important; width: 100% !important; padding: 12px 16px !important; background-color: #1e293b !important; color: #38bdf8 !important; border: 2px solid #38bdf8 !important; border-radius: 12px !important; text-align: center !important; font-weight: 800 !important; font-size: 1.05rem !important; text-decoration: none !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; transition: all 0.25s ease-in-out !important; box-sizing: border-box !important; margin-bottom: 12px !important; }
     .custom-btn:hover { background-color: #38bdf8 !important; color: #0f172a !important; border-color: #ffffff !important; }
 
-    /* Estilos del botón de descarga */
     div[data-testid="stDownloadButton"] button { background-color: #1e293b !important; border: 2px solid #38bdf8 !important; border-radius: 12px !important; width: 100% !important; padding: 12px 16px !important; }
     div[data-testid="stDownloadButton"] button p, div[data-testid="stDownloadButton"] button span { color: #38bdf8 !important; font-weight: 800 !important; }
     div[data-testid="stDownloadButton"] button:hover { background-color: #38bdf8 !important; }
     div[data-testid="stDownloadButton"] button:hover p { color: #0f172a !important; }
 
-    /* Pie de página */
     .drew-footer { margin-top: 50px; margin-bottom: 20px; padding: 24px; background: #0f172a; border: 2px solid #ffffff; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
     .drew-brand { font-size: 1.6rem; font-weight: 900; color: #ffffff !important; margin-bottom: 4px; }
     .drew-rights { color: #cbd5e1 !important; font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; }
@@ -458,7 +453,7 @@ if len(df_clean) >= 3:
         st.write("Descarga la poligonal vectorial directa en **formato `.DXF`** para AutoCAD o Civil 3D.")
         st.download_button(label="✏️ Descargar plano en formato AutoCAD (.DXF)", data=generar_dxf(vertices_nombres, x, y), file_name="plano_perimetrico_utm.dxf", mime="application/dxf", use_container_width=True)
 
-    # --- SECCIÓN 5: FORMULARIO OPTIMIZADO PARA GENERACIÓN DE PDF ---
+    # --- SECCIÓN 5: FORMULARIO PARA GENERACIÓN DE PDF ---
     st.markdown("---")
     st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
     st.info("💡 Rellena los datos en el formulario. Al presionar **Actualizar y Generar PDF**, se creará el archivo sin latencias intermedias.")
