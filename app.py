@@ -228,8 +228,8 @@ def generar_svg_plano(x, y, vertices, distancias):
     </div>
     '''
 
-# --- FUNCIÓN DE GENERACIÓN DE PDF INSTITUCIONAL EXPANDIDO CON REPORTLAB ---
-def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, distrito, zonificacion, opcion_zona, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
+# --- FUNCIÓN DE GENERACIÓN DE PDF REESTRUCTURADO (ITEMS 7, 8 Y 9) ---
+def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, distrito, zonificacion, opcion_zona, lindero_norte, lindero_sur, lindero_este, lindero_oeste, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -246,46 +246,46 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
     title_style = ParagraphStyle(
         'MainTitle',
         parent=styles['Heading1'],
-        fontSize=14,
-        leading=16,
+        fontSize=13,
+        leading=15,
         textColor=colors.HexColor('#1E293B'),
-        spaceAfter=4,
+        spaceAfter=3,
         alignment=1
     )
     
     subtitle_style = ParagraphStyle(
         'SubTitle',
         parent=styles['Heading2'],
-        fontSize=10,
-        leading=13,
+        fontSize=9.5,
+        leading=12,
         textColor=colors.HexColor('#64748B'),
-        spaceAfter=12,
+        spaceAfter=10,
         alignment=1
     )
     
     section_style = ParagraphStyle(
         'SectionHeader',
         parent=styles['Heading2'],
-        fontSize=10,
-        leading=14,
+        fontSize=9.5,
+        leading=13,
         textColor=colors.HexColor('#0284C7'),
-        spaceBefore=10,
-        spaceAfter=6
+        spaceBefore=8,
+        spaceAfter=4
     )
     
     body_style = ParagraphStyle(
         'BodyDark',
         parent=styles['Normal'],
-        fontSize=8.5,
-        leading=12,
+        fontSize=8,
+        leading=11,
         textColor=colors.HexColor('#334155')
     )
     
     table_cell_style = ParagraphStyle(
         'TableCell',
         parent=styles['Normal'],
-        fontSize=8,
-        leading=10,
+        fontSize=7.5,
+        leading=9.5,
         textColor=colors.HexColor('#1E293B'),
         alignment=1
     )
@@ -293,8 +293,8 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
     table_header_style = ParagraphStyle(
         'TableHeader',
         parent=styles['Normal'],
-        fontSize=8.5,
-        leading=11,
+        fontSize=8,
+        leading=10,
         textColor=colors.HexColor('#0F172A'),
         fontName="Helvetica-Bold",
         alignment=1
@@ -304,13 +304,12 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
     story.append(Paragraph("MEMORIA DESCRIPTIVA TÉCNICA OFICIAL", title_style))
     story.append(Paragraph(f"SANEAMIENTO FÍSICO LEGAL Y CATASTRAL - DATOS UTM ({opcion_zona})", subtitle_style))
     
-    # Cuadro de Datos Generales y Geográficos Completos
+    # 1 a 6: Cuadro de Datos Generales y Geográficos
     info_data = [
-        [Paragraph("<b>1. PROPIETARIO / ADMINISTRADO:</b>", body_style), Paragraph(prop_nombre, body_style)],
-        [Paragraph("<b>   D.N.I. / R.U.C.:</b>", body_style), Paragraph(prop_dni, body_style)],
+        [Paragraph("<b>1. PROPIETARIO / ADMINISTRADO:</b>", body_style), Paragraph(f"{prop_nombre} (D.N.I. / R.U.C.: {prop_dni})", body_style)],
         [Paragraph("<b>2. PROYECTO:</b>", body_style), Paragraph(proyecto_nombre, body_style)],
         [Paragraph("<b>3. EXPEDIENTE / TRÁMITE:</b>", body_style), Paragraph(num_tramite, body_style)],
-        [Paragraph("<b>4. UBICACIÓN CATASTRAL Y GEODÉSICA:</b>", body_style), Paragraph("", body_style)],
+        [Paragraph("<b>4. UBICACIÓN GEOGRÁFICA Y CATASTRAL:</b>", body_style), Paragraph("", body_style)],
         [Paragraph("   - Código UBIGEO:", body_style), Paragraph(ubigeo_code, body_style)],
         [Paragraph("   - Datum / Sistema Referencial:", body_style), Paragraph(datum_origen, body_style)],
         [Paragraph("   - Origen de Datos:", body_style), Paragraph(origen_gps, body_style)],
@@ -318,7 +317,8 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
         [Paragraph("   - Nombre del Predio:", body_style), Paragraph(predio_nombre, body_style)],
         [Paragraph("   - Valle / Sector:", body_style), Paragraph(f"{valle_nombre} / {sector_nombre}", body_style)],
         [Paragraph("   - Distrito / Provincia / Dpto:", body_style), Paragraph(f"{distrito} / {provincia} / {departamento}", body_style)],
-        [Paragraph("<b>5. ZONIFICACIÓN / USO:</b>", body_style), Paragraph(zonificacion, body_style)]
+        [Paragraph("<b>5. ZONIFICACIÓN / USO:</b>", body_style), Paragraph(zonificacion, body_style)],
+        [Paragraph("<b>6. DESCRIPCIÓN DEL TERRENO:</b>", body_style), Paragraph(f"El predio denominado <b>{predio_nombre}</b> presenta una configuración geométrica cerrada con linderos rectos definidos por {len(x)} vértices principales.", body_style)]
     ]
     
     t_info = Table(info_data, colWidths=[170, 334])
@@ -326,22 +326,37 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
         ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E2E8F0')),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
     ]))
     story.append(t_info)
-    story.append(Spacer(1, 8))
-    
-    # Descripción del terreno
-    story.append(Paragraph("5. DESCRIPCIÓN DEL TERRENO Y LINDEROS", section_style))
-    desc_texto = f"El predio denominado <b>{predio_nombre}</b>, materia de la presente memoria descriptiva, se ubica en el Sector <b>{sector_nombre}</b>, Valle <b>{valle_nombre}</b>, Distrito de <b>{distrito}</b>, Provincia de <b>{provincia}</b>, Departamento de <b>{departamento}</b>, con zonificación <b>{zonificacion}</b>. Cuenta con un área superficial plana calculada de <b>{area_m2:,.2f} m² ({area_ha:,.4f} ha)</b> y un perímetro total de <b>{perimetro:,.2f} m</b>, definido geométricamente por {len(x)} vértices principales."
-    story.append(Paragraph(desc_texto, body_style))
     story.append(Spacer(1, 6))
     
-    # Cuadro de Coordenadas y Linderos
-    story.append(Paragraph(f"6. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM ({datum_origen} - {opcion_zona})", section_style))
+    # ITEM 7: LINDEROS Y COLINDANCIAS
+    story.append(Paragraph("7. LINDEROS Y COLINDANCIAS POR PUNTOS CARDINALES", section_style))
+    linderos_data = [
+        [Paragraph("<b>POR EL NORTE:</b>", body_style), Paragraph(lindero_norte, body_style)],
+        [Paragraph("<b>POR EL SUR:</b>", body_style), Paragraph(lindero_sur, body_style)],
+        [Paragraph("<b>POR EL ESTE:</b>", body_style), Paragraph(lindero_este, body_style)],
+        [Paragraph("<b>POR EL OESTE:</b>", body_style), Paragraph(lindero_oeste, body_style)]
+    ]
+    t_linderos = Table(linderos_data, colWidths=[120, 384])
+    t_linderos.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#FFFFFF')),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#0284C7')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_linderos)
+    story.append(Spacer(1, 6))
+
+    # ITEM 8: CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM
+    story.append(Paragraph(f"8. CUADRO DE DATOS TÉCNICOS Y COORDENADAS UTM ({datum_origen} - {opcion_zona})", section_style))
     
     n = len(x)
     table_rows = [[
@@ -369,16 +384,32 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F1F5F9')),
         ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#334155')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 3),
+        ('RIGHTPADDING', (0,0), (-1,-1), 3),
     ]))
     story.append(t_coords)
-    
-    resumen_totales = Paragraph(f"<b>Área Total: {area_m2:,.2f} m² | Perímetro Total: {perimetro:,.2f} m</b>", ParagraphStyle('TotalRight', parent=styles['Normal'], fontSize=8.5, alignment=2, spaceBefore=4, textColor=colors.HexColor('#0F172A')))
-    story.append(resumen_totales)
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 6))
+
+    # ITEM 9: ÁREA Y PERÍMETRO EXPLÍCITO
+    story.append(Paragraph("9. ÁREA Y PERÍMETRO DEL PREDIO", section_style))
+    area_perimetro_data = [
+        [Paragraph("<b>ÁREA PLANO UTM:</b>", body_style), Paragraph(f"<b>{area_m2:,.2f} m²</b> ({area_ha:,.4f} ha)", body_style)],
+        [Paragraph("<b>PERÍMETRO TOTAL:</b>", body_style), Paragraph(f"<b>{perimetro:,.2f} m</b> (Metros Lineales)", body_style)]
+    ]
+    t_area = Table(area_perimetro_data, colWidths=[150, 354])
+    t_area.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F1F5F9')),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#0F172A')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    story.append(t_area)
+    story.append(Spacer(1, 10))
     
     # Bloque de Firmas
     firmas_data = [
@@ -391,7 +422,7 @@ def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubi
     t_firmas.setStyle(TableStyle([
         ('LINEABOVE', (0,0), (0,0), 0.75, colors.HexColor('#334155')),
         ('LINEABOVE', (1,0), (1,0), 0.75, colors.HexColor('#334155')),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
     ]))
     story.append(t_firmas)
@@ -762,7 +793,7 @@ if len(df_clean) >= 3:
     # --- SECCIÓN 5: MEMORIA DESCRIPTIVA Y HOJA GUÍA OFICIAL (PDF REPORTLAB) ---
     st.markdown("---")
     st.subheader("5. Memoria Descriptiva & Hoja Guía Oficial (PDF)")
-    st.info("💡 Ingresa los datos completos del propietario, expediente y parámetros geográficos para generar el PDF institucional.")
+    st.info("💡 Ingresa los datos del administrado, ubicación y colindancias por puntos cardinales.")
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
@@ -784,13 +815,13 @@ if len(df_clean) >= 3:
     with col_geo1:
         origen_gps = st.text_input("📡 Origen de Datos", "GPS CATASTRAL / TOPOGRÁFICO")
     with col_geo2:
-        predio_nombre = st.text_input("🏡 Nombre del Predio", "PARADISO")
+        predio_nombre = st.text_input("🏡 Nombre del Predio", "FELIPE")
     with col_geo3:
         valle_nombre = st.text_input("🌾 Valle", "KOLKAQUE")
 
     col_ub1, col_ub2, col_ub3, col_ub4 = st.columns(4)
     with col_ub1:
-        sector_nombre = st.text_input("📍 Sector", "AYCHAHUACSO")
+        sector_nombre = st.text_input("📍 Sector", "BANCAPATA ALTA")
     with col_ub2:
         distrito = st.text_input("🏙️ Distrito", "TAMBURCO")
     with col_ub3:
@@ -802,12 +833,22 @@ if len(df_clean) >= 3:
     with col_z1:
         zonificacion = st.text_input("📋 Zonificación / Uso", "RDM / CZ")
 
+    # ENTRADA DE LINDEROS Y COLINDANCIAS (ITEM 7)
+    st.markdown("**📍 Linderos y Colindancias (Item 7)**")
+    col_lin1, col_lin2 = st.columns(2)
+    with col_lin1:
+        lindero_norte = st.text_input("⬆️ Por el Norte", "Colinda con la Av. Los Incas en una línea recta de 12.50 m")
+        lindero_sur = st.text_input("⬇️ Por el Sur", "Colinda con propiedad de terceros en una línea recta de 12.80 m")
+    with col_lin2:
+        lindero_este = st.text_input("➡️ Por el Este", "Colinda con lote N° 04 en una línea recta de 25.00 m")
+        lindero_oeste = st.text_input("⬅️ Por el Oeste", "Colinda con pasaje peatonal en una línea recta de 24.90 m")
+
     # Generación directa de bytes y botón de descarga (un solo clic)
     pdf_bytes = generar_pdf_memoria(
         prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, 
         origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, 
-        distrito, zonificacion, opcion_zona, area_m2, area_ha, perimetro, 
-        vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
+        distrito, zonificacion, opcion_zona, lindero_norte, lindero_sur, lindero_este, lindero_oeste,
+        area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
     )
 
     st.download_button(
@@ -836,7 +877,7 @@ st.markdown("""
                 <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="900" font-family="sans-serif" letter-spacing="1">NOLAN</text>
             </svg>
         </div>
-        <div class="drew-brand">🚀 Creado por DrewCode</div>
+        <div class="drew-brand">🚀 Creado por Drew Code</div>
         <div class="drew-rights">© Todos los Derechos Reservados</div>
         <div class="drew-contact">
             📧 <b>Email:</b> <a href="mailto:caam174@gmail.com" style="color: #38bdf8; text-decoration: none;">caam174@gmail.com</a> <br>
