@@ -761,7 +761,7 @@ if len(df_clean) >= 3:
     with col_p2:
         prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "26247302")
     with col_p3:
-        num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00894")
+        num_tramite = st.text_input("📁 N° de Trámite Administrativo / Expediente", "EXP-2026-00XXX")
 
     col_ub1, col_ub2 = st.columns([3, 1])
     with col_ub1:
@@ -802,7 +802,7 @@ st.markdown("""
                 <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="900" font-family="sans-serif" letter-spacing="1">NOLAN</text>
             </svg>
         </div>
-        <div class="drew-brand">🚀 Creado por Drew Code</div>
+        <div class="drew-brand">🚀 Creado por DrewCode</div>
         <div class="drew-rights">© Todos los Derechos Reservados</div>
         <div class="drew-contact">
             📧 <b>Email:</b> <a href="mailto:caam174@gmail.com" style="color: #38bdf8; text-decoration: none;">caam174@gmail.com</a> <br>
