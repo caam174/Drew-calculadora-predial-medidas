@@ -797,11 +797,11 @@ if len(df_clean) >= 3:
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        prop_nombre = st.text_input("👤 Nombres y Apellidos del Propietario", "Maximo Decimo Meridio")
+        prop_nombre = st.text_input("👤 Nombres y Apellidos del Propietario", "MAXIMO DECIMO MERIDIO")
     with col_p2:
         prop_dni = st.text_input("🆔 D.N.I. / R.U.C.", "26247302")
     with col_p3:
-        num_tramite = st.text_input("📁 N° de Trámite / Expediente", "EXP-2026-00894")
+        num_tramite = st.text_input("📁 N° de Trámite / Expediente", "EXP-2026-00XXX")
 
     col_pr1, col_pr2, col_pr3 = st.columns(3)
     with col_pr1:
@@ -815,13 +815,13 @@ if len(df_clean) >= 3:
     with col_geo1:
         origen_gps = st.text_input("📡 Origen de Datos", "GPS CATASTRAL / TOPOGRÁFICO")
     with col_geo2:
-        predio_nombre = st.text_input("🏡 Nombre del Predio", "FELIPE")
+        predio_nombre = st.text_input("🏡 Nombre del Predio", "PARADISO")
     with col_geo3:
         valle_nombre = st.text_input("🌾 Valle", "KOLKAQUE")
 
     col_ub1, col_ub2, col_ub3, col_ub4 = st.columns(4)
     with col_ub1:
-        sector_nombre = st.text_input("📍 Sector", "BANCAPATA ALTA")
+        sector_nombre = st.text_input("📍 Sector", "AYCHAHUACSO")
     with col_ub2:
         distrito = st.text_input("🏙️ Distrito", "TAMBURCO")
     with col_ub3:
@@ -877,7 +877,7 @@ st.markdown("""
                 <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="900" font-family="sans-serif" letter-spacing="1">NOLAN</text>
             </svg>
         </div>
-        <div class="drew-brand">🚀 Creado por Drew Code</div>
+        <div class="drew-brand">🚀 Creado por DrewCode</div>
         <div class="drew-rights">© Todos los Derechos Reservados</div>
         <div class="drew-contact">
             📧 <b>Email:</b> <a href="mailto:caam174@gmail.com" style="color: #38bdf8; text-decoration: none;">caam174@gmail.com</a> <br>
