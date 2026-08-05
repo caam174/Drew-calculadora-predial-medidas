@@ -57,7 +57,7 @@ class NumberedCanvas(canvas.Canvas):
         # 2. Pie de página institucional
         self.setFont('Helvetica', 8)
         self.setFillColor(colors.HexColor('#444444'))
-        self.drawString(54, 30, "Elaborado por: Área Técnica & Saneamiento | Drew Code")
+        self.drawString(54, 30, "Elaborado por: IdeasOffice | DrewCode")
         self.drawRightString(558, 30, f"Página {self._pageNumber} de {page_count}")
         self.restoreState()
 
@@ -183,7 +183,7 @@ def generar_pdf_memoria_cached(prop_nombre, prop_dni, num_tramite, proyecto_nomb
     
     firmas_data = [[
         Paragraph(f"<b>{prop_nombre}</b><br/>Propietario / Administrado<br/>DNI: {prop_dni}", table_cell_style),
-        Paragraph("<b>Especialista / Fiscalizador</b><br/>Área Técnica - Municipalidad", table_cell_style)
+        Paragraph("<b>Especialista / Fiscalizador</b><br/>Municipalidad", table_cell_style)
     ]]
     t_firmas = Table(firmas_data, colWidths=[230, 230])
     t_firmas.setStyle(TableStyle([
