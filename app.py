@@ -43,8 +43,6 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_elements(self, page_count):
         self.saveState()
-        
-        # 1. Marca de agua diagonal en rojo tenue
         self.setFont('Helvetica-Bold', 38)
         self.setFillColor(colors.HexColor('#DC2626'), alpha=0.12)
         self.saveState()
@@ -54,7 +52,6 @@ class NumberedCanvas(canvas.Canvas):
         self.drawCentredString(0, -25, "Ver. 01-2026")
         self.restoreState()
         
-        # 2. Pie de página institucional
         self.setFont('Helvetica', 8)
         self.setFillColor(colors.HexColor('#444444'))
         self.drawString(54, 30, "Elaborado por: IdeasOffice | DrewCode")
@@ -69,11 +66,8 @@ def obtener_transformador(epsg_code):
     except Exception:
         return None
 
-# --- CACHÉ DE GENERACIÓN DE PDF ---
-@st.cache_data(show_spinner=False)
-def generar_pdf_memoria_cached(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, distrito, zonificacion, opcion_zona, lindero_norte, lindero_sur, lindero_este, lindero_oeste, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x_tuple, y_tuple):
-    x = list(x_tuple)
-    y = list(y_tuple)
+# --- GENERACIÓN DIRECTA DE PDF SIN RIESGO DE ERRORES DE SERIALIZACIÓN ---
+def generar_pdf_memoria(prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, distrito, zonificacion, opcion_zona, lindero_norte, lindero_sur, lindero_este, lindero_oeste, area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
     styles = getSampleStyleSheet()
@@ -494,11 +488,11 @@ if len(df_clean) >= 3:
 
         btn_submit = st.form_submit_button(label="⚙️ Actualizar Datos de Memoria Descriptiva")
 
-    pdf_bytes = generar_pdf_memoria_cached(
+    pdf_bytes = generar_pdf_memoria(
         prop_nombre, prop_dni, num_tramite, proyecto_nombre, ubigeo_code, datum_origen, 
         origen_gps, predio_nombre, valle_nombre, sector_nombre, departamento, provincia, 
         distrito, zonificacion, opcion_zona, lindero_norte, lindero_sur, lindero_este, lindero_oeste,
-        area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, tuple(x), tuple(y)
+        area_m2, area_ha, perimetro, vertices_nombres, rumbos_text, distancias, azimuts_dms, x, y
     )
 
     st.download_button(
